@@ -35,6 +35,7 @@ public class KVConfigManager {
     private final NamesrvController namesrvController;
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    // 存储key-value键值对
     private final HashMap<String/* Namespace */, HashMap<String/* Key */, String/* Value */>> configTable =
         new HashMap<String, HashMap<String, String>>();
 
@@ -45,6 +46,7 @@ public class KVConfigManager {
     public void load() {
         String content = null;
         try {
+        	// 从文件中读取key-value字符串流
             content = MixAll.file2String(this.namesrvController.getNamesrvConfig().getKvConfigPath());
         } catch (IOException e) {
             log.warn("Load KV config table exception", e);
@@ -61,8 +63,10 @@ public class KVConfigManager {
 
     public void putKVConfig(final String namespace, final String key, final String value) {
         try {
+        	// 获取写锁,相应中断
             this.lock.writeLock().lockInterruptibly();
             try {
+            	// 获取指定namespace下的key-value键值对
                 HashMap<String, String> kvTable = this.configTable.get(namespace);
                 if (null == kvTable) {
                     kvTable = new HashMap<String, String>();
@@ -70,6 +74,7 @@ public class KVConfigManager {
                     log.info("putKVConfig create new Namespace {}", namespace);
                 }
 
+                // prev表示HashMap是否已经存在指定key
                 final String prev = kvTable.put(key, value);
                 if (null != prev) {
                     log.info("putKVConfig update config item, Namespace: {} Key: {} Value: {}",
@@ -79,6 +84,7 @@ public class KVConfigManager {
                         namespace, key, value);
                 }
             } finally {
+            	// 释放写锁
                 this.lock.writeLock().unlock();
             }
         } catch (InterruptedException e) {
@@ -90,6 +96,7 @@ public class KVConfigManager {
 
     public void persist() {
         try {
+        	// 获取读锁
             this.lock.readLock().lockInterruptibly();
             try {
                 KVConfigSerializeWrapper kvConfigSerializeWrapper = new KVConfigSerializeWrapper();
@@ -97,6 +104,7 @@ public class KVConfigManager {
 
                 String content = kvConfigSerializeWrapper.toJson();
 
+                // 将字符串对象存入文件中
                 if (null != content) {
                     MixAll.string2File(content, this.namesrvController.getNamesrvConfig().getKvConfigPath());
                 }
@@ -104,6 +112,7 @@ public class KVConfigManager {
                 log.error("persist kvconfig Exception, "
                     + this.namesrvController.getNamesrvConfig().getKvConfigPath(), e);
             } finally {
+            	// 释放读锁
                 this.lock.readLock().unlock();
             }
         } catch (InterruptedException e) {
@@ -112,6 +121,7 @@ public class KVConfigManager {
 
     }
 
+    // 从指定namespace中删除某个key对象
     public void deleteKVConfig(final String namespace, final String key) {
         try {
             this.lock.writeLock().lockInterruptibly();
@@ -134,12 +144,14 @@ public class KVConfigManager {
 
     public byte[] getKVListByNamespace(final String namespace) {
         try {
+        	// 获取读锁
             this.lock.readLock().lockInterruptibly();
             try {
                 HashMap<String, String> kvTable = this.configTable.get(namespace);
                 if (null != kvTable) {
                     KVTable table = new KVTable();
                     table.setTable(kvTable);
+                    // 获取json格式的Map字符串的字节数组
                     return table.encode();
                 }
             } finally {
@@ -152,6 +164,7 @@ public class KVConfigManager {
         return null;
     }
 
+    // 从指定namespace中获取指定key对象的value对象
     public String getKVConfig(final String namespace, final String key) {
         try {
             this.lock.readLock().lockInterruptibly();
@@ -170,6 +183,7 @@ public class KVConfigManager {
         return null;
     }
 
+    // 打印所有的key-value对象
     public void printAllPeriodically() {
         try {
             this.lock.readLock().lockInterruptibly();

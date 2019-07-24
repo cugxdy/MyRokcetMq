@@ -45,14 +45,20 @@ import org.apache.rocketmq.remoting.common.RemotingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// 路由信息管理对象
 public class RouteInfoManager {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
     private final static long BROKER_CHANNEL_EXPIRED_TIME = 1000 * 60 * 2;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    // Queue对应关系
     private final HashMap<String/* topic */, List<QueueData>> topicQueueTable;
+    // Broker对象关系
     private final HashMap<String/* brokerName */, BrokerData> brokerAddrTable;
+    // cluster对象
     private final HashMap<String/* clusterName */, Set<String/* brokerName */>> clusterAddrTable;
+    // 活跃broker对应关系
     private final HashMap<String/* brokerAddr */, BrokerLiveInfo> brokerLiveTable;
+    // 
     private final HashMap<String/* brokerAddr */, List<String>/* Filter Server */> filterServerTable;
 
     public RouteInfoManager() {
@@ -63,6 +69,7 @@ public class RouteInfoManager {
         this.filterServerTable = new HashMap<String, List<String>>(256);
     }
 
+    // 返回json格式字符串的字节数组
     public byte[] getAllClusterInfo() {
         ClusterInfo clusterInfoSerializeWrapper = new ClusterInfo();
         clusterInfoSerializeWrapper.setBrokerAddrTable(this.brokerAddrTable);
@@ -70,6 +77,7 @@ public class RouteInfoManager {
         return clusterInfoSerializeWrapper.encode();
     }
 
+    // 从topicQueueTable map中删除topic
     public void deleteTopic(final String topic) {
         try {
             try {
@@ -83,6 +91,7 @@ public class RouteInfoManager {
         }
     }
 
+    // 将所有topic存储在TopicList对象中,并返回json格式字符串的字节数组
     public byte[] getAllTopicList() {
         TopicList topicList = new TopicList();
         try {
@@ -99,6 +108,7 @@ public class RouteInfoManager {
         return topicList.encode();
     }
 
+    // 注册broker
     public RegisterBrokerResult registerBroker(
         final String clusterName,
         final String brokerAddr,
@@ -108,6 +118,7 @@ public class RouteInfoManager {
         final TopicConfigSerializeWrapper topicConfigWrapper,
         final List<String> filterServerList,
         final Channel channel) {
+    	
         RegisterBrokerResult result = new RegisterBrokerResult();
         try {
             try {
@@ -120,21 +131,31 @@ public class RouteInfoManager {
                 }
                 brokerNames.add(brokerName);
 
+                // 判断是否为首次注册
                 boolean registerFirst = false;
 
+                // 获取Broker元数据
                 BrokerData brokerData = this.brokerAddrTable.get(brokerName);
                 if (null == brokerData) {
                     registerFirst = true;
+                    // 创建BrokerData对象
                     brokerData = new BrokerData(clusterName, brokerName, new HashMap<Long, String>());
+                    // 将对应关系存入brokerAddrTable中
                     this.brokerAddrTable.put(brokerName, brokerData);
                 }
+                
+                // 存入brokerAddrs结构中
                 String oldAddr = brokerData.getBrokerAddrs().put(brokerId, brokerAddr);
+                // 判断是否第一次注册
                 registerFirst = registerFirst || (null == oldAddr);
 
+                // 当注册服务器为主服务器时
                 if (null != topicConfigWrapper
                     && MixAll.MASTER_ID == brokerId) {
+                	
                     if (this.isBrokerTopicConfigChanged(brokerAddr, topicConfigWrapper.getDataVersion())
                         || registerFirst) {
+                    	
                         ConcurrentMap<String, TopicConfig> tcTable =
                             topicConfigWrapper.getTopicConfigTable();
                         if (tcTable != null) {
@@ -145,16 +166,20 @@ public class RouteInfoManager {
                     }
                 }
 
+                // 生成BrokerLiveInfo对象
                 BrokerLiveInfo prevBrokerLiveInfo = this.brokerLiveTable.put(brokerAddr,
                     new BrokerLiveInfo(
                         System.currentTimeMillis(),
                         topicConfigWrapper.getDataVersion(),
                         channel,
                         haServerAddr));
+                
                 if (null == prevBrokerLiveInfo) {
+                	// 注册服务器成功
                     log.info("new broker registered, {} HAServer: {}", brokerAddr, haServerAddr);
                 }
 
+                // 过滤服务器列表
                 if (filterServerList != null) {
                     if (filterServerList.isEmpty()) {
                         this.filterServerTable.remove(brokerAddr);
@@ -163,11 +188,15 @@ public class RouteInfoManager {
                     }
                 }
 
+                // 当作为从服务器时
                 if (MixAll.MASTER_ID != brokerId) {
+                	// 获取主服务器地址信息
                     String masterAddr = brokerData.getBrokerAddrs().get(MixAll.MASTER_ID);
                     if (masterAddr != null) {
+                    	// 获取主服务器元数据
                         BrokerLiveInfo brokerLiveInfo = this.brokerLiveTable.get(masterAddr);
                         if (brokerLiveInfo != null) {
+                        	// 设置主服务器相关信息
                             result.setHaServerAddr(brokerLiveInfo.getHaServerAddr());
                             result.setMasterAddr(masterAddr);
                         }
@@ -183,6 +212,7 @@ public class RouteInfoManager {
         return result;
     }
 
+    // 判断topic是否change
     private boolean isBrokerTopicConfigChanged(final String brokerAddr, final DataVersion dataVersion) {
         BrokerLiveInfo prev = this.brokerLiveTable.get(brokerAddr);
         if (null == prev || !prev.getDataVersion().equals(dataVersion)) {
@@ -192,18 +222,24 @@ public class RouteInfoManager {
         return false;
     }
 
+    // 创建及更新消息队列元数据
     private void createAndUpdateQueueData(final String brokerName, final TopicConfig topicConfig) {
-        QueueData queueData = new QueueData();
+        
+    	QueueData queueData = new QueueData();
         queueData.setBrokerName(brokerName);
+        // 设置读写队列容量
         queueData.setWriteQueueNums(topicConfig.getWriteQueueNums());
         queueData.setReadQueueNums(topicConfig.getReadQueueNums());
+        
         queueData.setPerm(topicConfig.getPerm());
         queueData.setTopicSynFlag(topicConfig.getTopicSysFlag());
 
+        // 获取Topic下的队列元数据list对象
         List<QueueData> queueDataList = this.topicQueueTable.get(topicConfig.getTopicName());
         if (null == queueDataList) {
             queueDataList = new LinkedList<QueueData>();
             queueDataList.add(queueData);
+            // 注册QueueData至指定Topic下
             this.topicQueueTable.put(topicConfig.getTopicName(), queueDataList);
             log.info("new topic registered, {} {}", topicConfig.getTopicName(), queueData);
         } else {

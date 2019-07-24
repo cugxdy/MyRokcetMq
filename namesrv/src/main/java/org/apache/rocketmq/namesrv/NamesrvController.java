@@ -41,8 +41,10 @@ public class NamesrvController {
 	
     private static final Logger log = LoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
 
+    // 命名服务配置对象
     private final NamesrvConfig namesrvConfig;
 
+    // netty服务配置对象
     private final NettyServerConfig nettyServerConfig;
 
     // 定时任务
@@ -51,14 +53,18 @@ public class NamesrvController {
     
     // test
     private final KVConfigManager kvConfigManager;
+    
     private final RouteInfoManager routeInfoManager;
 
+    // 服务对象
     private RemotingServer remotingServer;
-
+ 
     private BrokerHousekeepingService brokerHousekeepingService;
 
+    // 线程执行组
     private ExecutorService remotingExecutor;
 
+    // 配置对象
     private Configuration configuration;
 
     public NamesrvController(NamesrvConfig namesrvConfig, NettyServerConfig nettyServerConfig) {
@@ -67,6 +73,7 @@ public class NamesrvController {
         this.kvConfigManager = new KVConfigManager(this);
         this.routeInfoManager = new RouteInfoManager();
         this.brokerHousekeepingService = new BrokerHousekeepingService(this);
+        
         this.configuration = new Configuration(
             log,
             this.namesrvConfig, this.nettyServerConfig
@@ -76,15 +83,19 @@ public class NamesrvController {
 
     public boolean initialize() {
 
+    	// 从配置文件中载入HashMap<String/* Namespace */, HashMap<String/* Key */, String/* Value */>>对象
         this.kvConfigManager.load();
 
+        // 初始化netty服务器配置
         this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.brokerHousekeepingService);
 
+        // 创建线程池
         this.remotingExecutor =
             Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new ThreadFactoryImpl("RemotingExecutorThread_"));
 
         this.registerProcessor();
 
+        // 定时任务,定时去关闭失效Broker服务器的连接
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -93,6 +104,7 @@ public class NamesrvController {
             }
         }, 5, 10, TimeUnit.SECONDS);
 
+        // 定时任务
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -115,10 +127,12 @@ public class NamesrvController {
         }
     }
 
+    // 启动netty服务器
     public void start() throws Exception {
         this.remotingServer.start();
     }
 
+    // 关闭所有的线程池
     public void shutdown() {
         this.remotingServer.shutdown();
         this.remotingExecutor.shutdown();

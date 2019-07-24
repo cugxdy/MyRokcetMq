@@ -183,6 +183,7 @@ public class MixAll {
         }
     }
 
+    // 从文件中读取key-value字符串流
     public static String file2String(final String fileName) throws IOException {
         File file = new File(fileName);
         return file2String(file);
@@ -238,16 +239,21 @@ public class MixAll {
         return null;
     }
 
+    // 日志输出当前服务器的配置属性
     public static void printObjectProperties(final Logger logger, final Object object) {
         printObjectProperties(logger, object, false);
     }
 
+    // 日志输出当前服务器的配置属性
     public static void printObjectProperties(final Logger logger, final Object object,
         final boolean onlyImportantField) {
         Field[] fields = object.getClass().getDeclaredFields();
+        // 遍历属性key-value键值对
         for (Field field : fields) {
+        	// 非static属性
             if (!Modifier.isStatic(field.getModifiers())) {
                 String name = field.getName();
+                // 属性名称开头不为this
                 if (!name.startsWith("this")) {
                     Object value = null;
                     try {
@@ -267,6 +273,7 @@ public class MixAll {
                         }
                     }
 
+                    // 日志输出所有的key-value键值对
                     if (logger != null) {
                         logger.info(name + "=" + value);
                     } else {

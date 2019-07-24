@@ -90,6 +90,7 @@ public abstract class NettyRemotingAbstract {
     /**
      * The default request processor to use in case there is no exact match in {@link #processorTable} per request code.
      */
+    // 将两个对象联合起来
     protected Pair<NettyRequestProcessor, ExecutorService> defaultRequestProcessor;
 
     /**

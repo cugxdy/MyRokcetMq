@@ -20,6 +20,7 @@ import java.util.HashMap;
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
 public class KVTable extends RemotingSerializable {
+	// 哈希key-value键值对对象
     private HashMap<String, String> table = new HashMap<String, String>();
 
     public HashMap<String, String> getTable() {

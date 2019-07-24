@@ -31,7 +31,7 @@ public class Configuration {
 
     private final Logger log;
 
-    // 
+    // key -value属性所在的对象
     private List<Object> configObjectList = new ArrayList<Object>(4);
     // 存储路径
     private String storePath;

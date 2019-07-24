@@ -27,6 +27,7 @@ import org.apache.commons.cli.ParseException;
 public class ServerUtil {
 
     public static Options buildCommandlineOptions(final Options options) {
+    	// 创建输入参数选项
         Option opt = new Option("h", "help", false, "Print help");
         opt.setRequired(false);
         options.addOption(opt);
@@ -65,7 +66,8 @@ public class ServerUtil {
     }
 
     public static Properties commandLine2Properties(final CommandLine commandLine) {
-        Properties properties = new Properties();
+        // 将CommandLine中的key-value存储进Properties中
+    	Properties properties = new Properties();
         Option[] opts = commandLine.getOptions();
 
         if (opts != null) {
