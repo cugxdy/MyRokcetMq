@@ -19,7 +19,9 @@ package org.apache.rocketmq.common;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+// 饿汉形式的单例模式
 public class BrokerConfigSingleton {
+	// 原子boolean类型
     private static AtomicBoolean isInit = new AtomicBoolean();
     private static BrokerConfig brokerConfig;
 
@@ -31,6 +33,7 @@ public class BrokerConfigSingleton {
     }
 
     public static void setBrokerConfig(BrokerConfig brokerConfig) {
+    	// 乐观锁CAS
         if (!isInit.compareAndSet(false, true)) {
             throw new IllegalArgumentException("broker config have inited !");
         }

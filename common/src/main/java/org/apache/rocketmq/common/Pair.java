@@ -16,6 +16,7 @@
  */
 package org.apache.rocketmq.common;
 
+// 组合对象,将两个对象联系在一起
 public class Pair<T1, T2> {
     private T1 object1;
     private T2 object2;

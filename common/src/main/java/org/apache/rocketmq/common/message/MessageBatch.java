@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 import org.apache.rocketmq.common.MixAll;
 
+// 批量Message消息
 public class MessageBatch extends Message implements Iterable<Message> {
 
     private static final long serialVersionUID = 621335151046335557L;
@@ -31,6 +32,7 @@ public class MessageBatch extends Message implements Iterable<Message> {
         this.messages = messages;
     }
 
+    // 编码
     public byte[] encode() {
         return MessageDecoder.encodeMessages(messages);
     }
@@ -45,9 +47,11 @@ public class MessageBatch extends Message implements Iterable<Message> {
         List<Message> messageList = new ArrayList<Message>(messages.size());
         Message first = null;
         for (Message message : messages) {
+        	// TimeDelayLevel不支持在批量操作中
             if (message.getDelayTimeLevel() > 0) {
                 throw new UnsupportedOperationException("TimeDelayLevel in not supported for batching");
             }
+            
             if (message.getTopic().startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
                 throw new UnsupportedOperationException("Retry Group is not supported for batching");
             }

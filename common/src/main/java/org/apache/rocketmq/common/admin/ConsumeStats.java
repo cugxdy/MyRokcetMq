@@ -26,6 +26,7 @@ public class ConsumeStats extends RemotingSerializable {
     private HashMap<MessageQueue, OffsetWrapper> offsetTable = new HashMap<MessageQueue, OffsetWrapper>();
     private double consumeTps = 0;
 
+    // 计算偏移量
     public long computeTotalDiff() {
         long diffTotal = 0L;
 

@@ -33,6 +33,7 @@ public class DataVersion extends RemotingSerializable {
         this.counter.incrementAndGet();
     }
 
+    // 时间戳
     public long getTimestamp() {
         return timestamp;
     }

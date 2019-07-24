@@ -35,15 +35,21 @@ import org.apache.rocketmq.remoting.netty.NettyServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+// MQ集群中做的是做命名服务，更新和路由发现 broker服务
 public class NamesrvController {
+	
     private static final Logger log = LoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
 
     private final NamesrvConfig namesrvConfig;
 
     private final NettyServerConfig nettyServerConfig;
 
+    // 定时任务
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryImpl(
         "NSScheduledThread"));
+    
+    // 
     private final KVConfigManager kvConfigManager;
     private final RouteInfoManager routeInfoManager;
 

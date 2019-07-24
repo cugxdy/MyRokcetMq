@@ -67,12 +67,16 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
     private final ServerBootstrap serverBootstrap;
     private final EventLoopGroup eventLoopGroupSelector;
     private final EventLoopGroup eventLoopGroupBoss;
+    
+    // netty服务配置项
     private final NettyServerConfig nettyServerConfig;
 
+    // 线程池执行器
     private final ExecutorService publicExecutor;
     private final ChannelEventListener channelEventListener;
 
     private final Timer timer = new Timer("ServerHouseKeepingService", true);
+    // 事件执行组
     private DefaultEventExecutorGroup defaultEventExecutorGroup;
 
     private RPCHook rpcHook;
@@ -90,15 +94,19 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
     public NettyRemotingServer(final NettyServerConfig nettyServerConfig,
         final ChannelEventListener channelEventListener) {
         super(nettyServerConfig.getServerOnewaySemaphoreValue(), nettyServerConfig.getServerAsyncSemaphoreValue());
+        
+        // 创建ServerBootstrap对象
         this.serverBootstrap = new ServerBootstrap();
         this.nettyServerConfig = nettyServerConfig;
         this.channelEventListener = channelEventListener;
 
+        // 获取线程计数器
         int publicThreadNums = nettyServerConfig.getServerCallbackExecutorThreads();
         if (publicThreadNums <= 0) {
             publicThreadNums = 4;
         }
 
+        // 创建线程执行组
         this.publicExecutor = Executors.newFixedThreadPool(publicThreadNums, new ThreadFactory() {
             private AtomicInteger threadIndex = new AtomicInteger(0);
 
@@ -108,6 +116,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
             }
         });
 
+        // 创建netty中的boss线程组
         this.eventLoopGroupBoss = new NioEventLoopGroup(1, new ThreadFactory() {
             private AtomicInteger threadIndex = new AtomicInteger(0);
 
@@ -117,7 +126,9 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
             }
         });
 
+        // 判断是否处于linux平台下
         if (useEpoll()) {
+        	// 创建工作线程组
             this.eventLoopGroupSelector = new EpollEventLoopGroup(nettyServerConfig.getServerSelectorThreads(), new ThreadFactory() {
                 private AtomicInteger threadIndex = new AtomicInteger(0);
                 private int threadTotal = nettyServerConfig.getServerSelectorThreads();
@@ -128,6 +139,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                 }
             });
         } else {
+        	// 创建工作线程组
             this.eventLoopGroupSelector = new NioEventLoopGroup(nettyServerConfig.getServerSelectorThreads(), new ThreadFactory() {
                 private AtomicInteger threadIndex = new AtomicInteger(0);
                 private int threadTotal = nettyServerConfig.getServerSelectorThreads();
@@ -139,6 +151,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
             });
         }
 
+        // Tls模式
         TlsMode tlsMode = TlsSystemConfig.tlsMode;
         log.info("Server is running in TLS {} mode", tlsMode.getName());
 
@@ -173,7 +186,8 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                     return new Thread(r, "NettyServerCodecThread_" + this.threadIndex.incrementAndGet());
                 }
             });
-
+        
+        // 配置ServerBootstrap对象
         ServerBootstrap childHandler =
             this.serverBootstrap.group(this.eventLoopGroupBoss, this.eventLoopGroupSelector)
                 .channel(useEpoll() ? EpollServerSocketChannel.class : NioServerSocketChannel.class)
@@ -205,17 +219,21 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         }
 
         try {
+        	// 获取Future对象
             ChannelFuture sync = this.serverBootstrap.bind().sync();
+            // 获取服务address地址
             InetSocketAddress addr = (InetSocketAddress) sync.channel().localAddress();
             this.port = addr.getPort();
         } catch (InterruptedException e1) {
             throw new RuntimeException("this.serverBootstrap.bind().sync() InterruptedException", e1);
         }
 
+        // 启动NettyEventExecutor线程
         if (this.channelEventListener != null) {
             this.nettyEventExecutor.start();
         }
 
+        // 定时器任务
         this.timer.scheduleAtFixedRate(new TimerTask() {
 
             @Override
@@ -232,6 +250,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
     @Override
     public void shutdown() {
         try {
+        	// 撤销定时器
             if (this.timer != null) {
                 this.timer.cancel();
             }

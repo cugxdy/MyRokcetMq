@@ -36,6 +36,7 @@ public class CountDownLatch2 {
     public CountDownLatch2(int count) {
         if (count < 0)
             throw new IllegalArgumentException("count < 0");
+        // 创建同步sync对象
         this.sync = new Sync(count);
     }
 
@@ -163,6 +164,7 @@ public class CountDownLatch2 {
 
         private final int startCount;
 
+        // 设置状态标记位
         Sync(int count) {
             this.startCount = count;
             setState(count);
@@ -172,10 +174,12 @@ public class CountDownLatch2 {
             return getState();
         }
 
+        // 当state=0,获取锁资源成功
         protected int tryAcquireShared(int acquires) {
             return (getState() == 0) ? 1 : -1;
         }
 
+        // 释放共享锁
         protected boolean tryReleaseShared(int releases) {
             // Decrement count; signal when transition to zero
             for (; ; ) {
@@ -188,6 +192,7 @@ public class CountDownLatch2 {
             }
         }
 
+        // 重置状态位
         protected void reset() {
             setState(startCount);
         }

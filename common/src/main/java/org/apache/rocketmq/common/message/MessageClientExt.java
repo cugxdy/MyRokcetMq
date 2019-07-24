@@ -18,7 +18,9 @@ package org.apache.rocketmq.common.message;
 
 public class MessageClientExt extends MessageExt {
 
-    public String getOffsetMsgId() {
+	private static final long serialVersionUID = 3356781067783450251L;
+
+	public String getOffsetMsgId() {
         return super.getMsgId();
     }
 

@@ -38,6 +38,7 @@ public class NettyClientConfig {
     private boolean clientPooledByteBufAllocatorEnable = false;
     private boolean clientCloseSocketIfTimeout = false;
 
+    // 安全传输层协议(TLS)
     private boolean useTLS;
 
     public boolean isClientCloseSocketIfTimeout() {

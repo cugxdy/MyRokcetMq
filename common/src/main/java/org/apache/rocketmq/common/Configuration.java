@@ -31,16 +31,22 @@ public class Configuration {
 
     private final Logger log;
 
+    // 
     private List<Object> configObjectList = new ArrayList<Object>(4);
+    // 存储路径
     private String storePath;
+    // 判断存储路径的获得是否从对象属性中获得
     private boolean storePathFromConfig = false;
     private Object storePathObject;
     private Field storePathField;
+    
     private DataVersion dataVersion = new DataVersion();
+    // JDK 读写锁
     private ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     /**
      * All properties include configs in object and extend properties.
      */
+    // Properties继承HashTable是线程安全key-value键值对
     private Properties allConfigs = new Properties();
 
     public Configuration(Logger log) {
@@ -52,6 +58,7 @@ public class Configuration {
         if (configObjects == null || configObjects.length == 0) {
             return;
         }
+        // 注册对象
         for (Object configObject : configObjects) {
             registerConfig(configObject);
         }
@@ -59,7 +66,7 @@ public class Configuration {
 
     public Configuration(Logger log, String storePath, Object... configObjects) {
         this(log, configObjects);
-        this.storePath = storePath;
+        this.storePath = storePath; // 设置存储路径
     }
 
     /**
@@ -69,6 +76,7 @@ public class Configuration {
      */
     public Configuration registerConfig(Object configObject) {
         try {
+        	// 获取写锁,在获取锁时线程中断将抛出异常
             readWriteLock.writeLock().lockInterruptibly();
 
             try {
@@ -79,8 +87,10 @@ public class Configuration {
 
                 configObjectList.add(configObject);
             } finally {
+            	// 释放写锁
                 readWriteLock.writeLock().unlock();
             }
+            // 处理InterruptedException异常
         } catch (InterruptedException e) {
             log.error("registerConfig lock error");
         }
@@ -92,12 +102,14 @@ public class Configuration {
      *
      * @return the current Configuration object
      */
+    // 合并key-value键值对
     public Configuration registerConfig(Properties extProperties) {
         if (extProperties == null) {
             return this;
         }
 
         try {
+        	// 获取写锁
             readWriteLock.writeLock().lockInterruptibly();
 
             try {
@@ -105,6 +117,7 @@ public class Configuration {
             } finally {
                 readWriteLock.writeLock().unlock();
             }
+            // 处理中断异常
         } catch (InterruptedException e) {
             log.error("register lock error. {}" + extProperties);
         }
@@ -117,6 +130,7 @@ public class Configuration {
      *
      * @throws java.lang.RuntimeException if the field of object is not exist.
      */
+    // 获取存储路径从对象属性中
     public void setStorePathFromConfig(Object object, String fieldName) {
         assert object != null;
 
@@ -128,8 +142,10 @@ public class Configuration {
                 this.storePathObject = object;
                 // check
                 this.storePathField = object.getClass().getDeclaredField(fieldName);
+                // 属性不为空,并且非static属性
                 assert this.storePathField != null
                     && !Modifier.isStatic(this.storePathField.getModifiers());
+                // 设置可获得性
                 this.storePathField.setAccessible(true);
             } catch (NoSuchFieldException e) {
                 throw new RuntimeException(e);
@@ -141,9 +157,11 @@ public class Configuration {
         }
     }
 
+    // 获取存储路径
     private String getStorePath() {
         String realStorePath = null;
         try {
+        	// 获取读锁
             readWriteLock.readLock().lockInterruptibly();
 
             try {
@@ -166,12 +184,15 @@ public class Configuration {
         return realStorePath;
     }
 
+    // 设置存储路径
     public void setStorePath(final String storePath) {
         this.storePath = storePath;
     }
 
+    // 更新key-value键值对
     public void update(Properties properties) {
         try {
+        	// 获取写锁
             readWriteLock.writeLock().lockInterruptibly();
 
             try {
@@ -182,7 +203,8 @@ public class Configuration {
                     // not allConfigs to update...
                     MixAll.properties2Object(properties, configObject);
                 }
-
+                
+                // 设置版本号
                 this.dataVersion.nextVersion();
 
             } finally {
@@ -192,17 +214,19 @@ public class Configuration {
             log.error("update lock error, {}", properties);
             return;
         }
-
+        // 将属性值写入到文件中
         persist();
     }
 
+    // 将属性值写入到文件中
     public void persist() {
         try {
             readWriteLock.readLock().lockInterruptibly();
 
             try {
+            	// 获取所有属性配置并生成字符串
                 String allConfigs = getAllConfigsInternal();
-
+                
                 MixAll.string2File(allConfigs, getStorePath());
             } catch (IOException e) {
                 log.error("persist string2File error, ", e);
@@ -214,6 +238,7 @@ public class Configuration {
         }
     }
 
+    // 获取属性key-value键值对的字符串形式
     public String getAllConfigsFormatString() {
         try {
             readWriteLock.readLock().lockInterruptibly();
@@ -236,6 +261,7 @@ public class Configuration {
         return this.dataVersion.toJson();
     }
 
+    // 获取所有的配置
     public Properties getAllConfigs() {
         try {
             readWriteLock.readLock().lockInterruptibly();
@@ -254,10 +280,12 @@ public class Configuration {
         return null;
     }
 
+    // 获取所有的属性并用于存储在文件中
     private String getAllConfigsInternal() {
         StringBuilder stringBuilder = new StringBuilder();
 
         // reload from config object ?
+        // 将object的属性再一次填充
         for (Object configObject : this.configObjectList) {
             Properties properties = MixAll.object2Properties(configObject);
             if (properties != null) {
@@ -274,6 +302,7 @@ public class Configuration {
         return stringBuilder.toString();
     }
 
+    // 合并key-value键值对:使用from中的key-value替换to中的key-value键值对
     private void merge(Properties from, Properties to) {
         for (Object key : from.keySet()) {
             Object fromObj = from.get(key), toObj = to.get(key);
@@ -284,7 +313,9 @@ public class Configuration {
         }
     }
 
+    // 更新key-value键值对,且必须存在不为空
     private void mergeIfExist(Properties from, Properties to) {
+    	// 遍历keys集合
         for (Object key : from.keySet()) {
             if (!to.containsKey(key)) {
                 continue;

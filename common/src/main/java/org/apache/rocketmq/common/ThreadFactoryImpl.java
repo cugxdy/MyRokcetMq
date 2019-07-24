@@ -20,8 +20,10 @@ package org.apache.rocketmq.common;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicLong;
 
+// 创建线程实现类
 public class ThreadFactoryImpl implements ThreadFactory {
     private final AtomicLong threadIndex = new AtomicLong(0);
+    // 线程名称前缀
     private final String threadNamePrefix;
 
     public ThreadFactoryImpl(final String threadNamePrefix) {

@@ -17,6 +17,7 @@
 
 package org.apache.rocketmq.common.admin;
 
+// 偏移量
 public class RollbackStats {
     private String brokerName;
     private long queueId;

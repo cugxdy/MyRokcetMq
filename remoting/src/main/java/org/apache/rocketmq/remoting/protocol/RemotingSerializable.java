@@ -20,8 +20,10 @@ import com.alibaba.fastjson.JSON;
 import java.nio.charset.Charset;
 
 public abstract class RemotingSerializable {
+	// 默认为UTF-8编码
     private final static Charset CHARSET_UTF8 = Charset.forName("UTF-8");
 
+    // 编码java对象
     public static byte[] encode(final Object obj) {
         final String json = toJson(obj, false);
         if (json != null) {
@@ -34,11 +36,14 @@ public abstract class RemotingSerializable {
         return JSON.toJSONString(obj, prettyFormat);
     }
 
+    // 以json类型解码字节流数据
     public static <T> T decode(final byte[] data, Class<T> classOfT) {
+    	// 将byte转换成字符串类型
         final String json = new String(data, CHARSET_UTF8);
         return fromJson(json, classOfT);
     }
 
+    // 解析成java对象
     public static <T> T fromJson(String json, Class<T> classOfT) {
         return JSON.parseObject(json, classOfT);
     }

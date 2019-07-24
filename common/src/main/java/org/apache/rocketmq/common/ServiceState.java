@@ -16,6 +16,7 @@
  */
 package org.apache.rocketmq.common;
 
+// RocketMq当前服务状态枚举值
 public enum ServiceState {
     /**
      * Service just created,not start

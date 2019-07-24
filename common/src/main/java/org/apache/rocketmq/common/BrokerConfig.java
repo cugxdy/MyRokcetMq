@@ -34,29 +34,33 @@ public class BrokerConfig {
     private String namesrvAddr = System.getProperty(MixAll.NAMESRV_ADDR_PROPERTY, System.getenv(MixAll.NAMESRV_ADDR_ENV));
     @ImportantField
     private String brokerIP1 = RemotingUtil.getLocalAddress();
+    
     private String brokerIP2 = RemotingUtil.getLocalAddress();
     @ImportantField
-    private String brokerName = localHostName();
+    private String brokerName = localHostName();  // Broker名称
+    
     @ImportantField
-    private String brokerClusterName = "DefaultCluster";
+    private String brokerClusterName = "DefaultCluster"; // Broker集群名称
     @ImportantField
-    private long brokerId = MixAll.MASTER_ID;
+    private long brokerId = MixAll.MASTER_ID; // Master名称号
     private int brokerPermission = PermName.PERM_READ | PermName.PERM_WRITE;
-    private int defaultTopicQueueNums = 8;
+    private int defaultTopicQueueNums = 8; // 默认Topic计数
     @ImportantField
-    private boolean autoCreateTopicEnable = true;
+    private boolean autoCreateTopicEnable = true; // 自动创建Topic为true
 
-    private boolean clusterTopicEnable = true;
+    private boolean clusterTopicEnable = true; // 集群Topic为true
 
     private boolean brokerTopicEnable = true;
-    @ImportantField
+    @ImportantField 
     private boolean autoCreateSubscriptionGroup = true;
+    
     private String messageStorePlugIn = "";
 
     /**
      * thread numbers for send message thread pool, since spin lock will be used by default since 4.0.x, the default
      * value is 1.
      */
+    // 发送消息线程池计数
     private int sendMessageThreadPoolNums = 1; //16 + Runtime.getRuntime().availableProcessors() * 4;
     private int pullMessageThreadPoolNums = 16 + Runtime.getRuntime().availableProcessors() * 2;
     private int queryMessageThreadPoolNums = 8 + Runtime.getRuntime().availableProcessors();
@@ -73,6 +77,7 @@ public class BrokerConfig {
     private boolean rejectTransactionMessage = false;
     @ImportantField
     private boolean fetchNamesrvAddrByAddressServer = false;
+    
     private int sendThreadPoolQueueCapacity = 10000;
     private int pullThreadPoolQueueCapacity = 100000;
     private int queryThreadPoolQueueCapacity = 20000;

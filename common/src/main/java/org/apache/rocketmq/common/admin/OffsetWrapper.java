@@ -16,6 +16,7 @@
  */
 package org.apache.rocketmq.common.admin;
 
+// 偏移量统计类
 public class OffsetWrapper {
     private long brokerOffset;
     private long consumerOffset;

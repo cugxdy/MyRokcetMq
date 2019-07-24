@@ -77,6 +77,7 @@ public class MixAll {
 
     public static final List<String> LOCAL_INET_ADDRESS = getLocalInetAddress();
     public static final String LOCALHOST = localhost();
+    // 字符串编码格式
     public static final String DEFAULT_CHARSET = "UTF-8";
     public static final long MASTER_ID = 0L;
     public static final long CURRENT_JVM_PID = getPID();
@@ -125,6 +126,7 @@ public class MixAll {
         }
     }
 
+    // 获取进程Pid
     public static long getPID() {
         String processName = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
         if (processName != null && processName.length() > 0) {
@@ -140,6 +142,7 @@ public class MixAll {
 
     public static void string2File(final String str, final String fileName) throws IOException {
 
+    	// 创建文件名称
         String tmpFile = fileName + ".tmp";
         string2FileNotSafe(str, tmpFile);
 
@@ -152,20 +155,24 @@ public class MixAll {
         File file = new File(fileName);
         file.delete();
 
+        // 重命名文件名
         file = new File(tmpFile);
         file.renameTo(new File(fileName));
     }
 
     public static void string2FileNotSafe(final String str, final String fileName) throws IOException {
         File file = new File(fileName);
+        // 获取所属目录
         File fileParent = file.getParentFile();
         if (fileParent != null) {
+        	// 创建目录
             fileParent.mkdirs();
         }
         FileWriter fileWriter = null;
 
         try {
             fileWriter = new FileWriter(file);
+            // 将字符串写入临时文件中
             fileWriter.write(str);
         } catch (IOException e) {
             throw e;
@@ -181,14 +188,18 @@ public class MixAll {
         return file2String(file);
     }
 
+    // 从文件中去读取字符串
     public static String file2String(final File file) throws IOException {
+    	// 判断文件是否存在
         if (file.exists()) {
             byte[] data = new byte[(int) file.length()];
             boolean result;
 
+            // 文件输入流对象
             FileInputStream inputStream = null;
             try {
                 inputStream = new FileInputStream(file);
+                // 读取字符串字节数组
                 int len = inputStream.read(data);
                 result = len == data.length;
             } finally {
@@ -265,10 +276,11 @@ public class MixAll {
         }
     }
 
+    // 将properties中key-value生成字符串类型格式为:key=value\n
     public static String properties2String(final Properties properties) {
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-            if (entry.getValue() != null) {
+            if (entry.getValue() != null) {// value对象不为空时
                 sb.append(entry.getKey().toString() + "=" + entry.getValue().toString() + "\n");
             }
         }
@@ -288,22 +300,27 @@ public class MixAll {
         return properties;
     }
 
+    // 获取对象属性值
     public static Properties object2Properties(final Object object) {
         Properties properties = new Properties();
 
         Field[] fields = object.getClass().getDeclaredFields();
         for (Field field : fields) {
+        	// 非static属性
             if (!Modifier.isStatic(field.getModifiers())) {
+            	// 获取属性名称
                 String name = field.getName();
                 if (!name.startsWith("this")) {
                     Object value = null;
                     try {
+                    	// 设置可获得性
                         field.setAccessible(true);
                         value = field.get(object);
                     } catch (IllegalAccessException e) {
                         log.error("Failed to handle properties", e);
                     }
 
+                    // 将对象属性值存入key-value键值对中
                     if (value != null) {
                         properties.setProperty(name, value.toString());
                     }
@@ -316,20 +333,25 @@ public class MixAll {
 
     public static void properties2Object(final Properties p, final Object object) {
         Method[] methods = object.getClass().getMethods();
+        // 遍历对象的方法集合
         for (Method method : methods) {
             String mn = method.getName();
+            // 调用set方法设置相应属性的value
             if (mn.startsWith("set")) {
                 try {
                     String tmp = mn.substring(4);
                     String first = mn.substring(3, 4);
 
+                    // 获取属性值
                     String key = first.toLowerCase() + tmp;
                     String property = p.getProperty(key);
+                    
                     if (property != null) {
                         Class<?>[] pt = method.getParameterTypes();
                         if (pt != null && pt.length > 0) {
                             String cn = pt[0].getSimpleName();
                             Object arg = null;
+                            // 根据需要参数类型解析成执行参数类型的参数
                             if (cn.equals("int") || cn.equals("Integer")) {
                                 arg = Integer.parseInt(property);
                             } else if (cn.equals("long") || cn.equals("Long")) {
@@ -345,6 +367,7 @@ public class MixAll {
                             } else {
                                 continue;
                             }
+                            // 反射调用对象的SET方法
                             method.invoke(object, arg);
                         }
                     }
@@ -376,6 +399,7 @@ public class MixAll {
         return inetAddressList;
     }
 
+    // 获得本机IP地址
     private static String localhost() {
         try {
             return InetAddress.getLocalHost().getHostAddress();

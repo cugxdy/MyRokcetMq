@@ -22,11 +22,13 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 public class ChannelUtil {
+	// 获取远程主机IP
     public static String getRemoteIp(Channel channel) {
         InetSocketAddress inetSocketAddress = (InetSocketAddress) channel.remoteAddress();
         if (inetSocketAddress == null) {
             return "";
         }
+        // 获取InetAddress地址
         final InetAddress inetAddr = inetSocketAddress.getAddress();
         return inetAddr != null ? inetAddr.getHostAddress() : inetSocketAddress.getHostName();
     }

@@ -22,14 +22,19 @@ import org.apache.rocketmq.common.constant.LoggerName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// 服务线程
 public abstract class ServiceThread implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.COMMON_LOGGER_NAME);
 
+    // join阻塞时间为90s
     private static final long JOIN_TIME = 90 * 1000;
 
+    // 线程对象
     protected final Thread thread;
     protected final CountDownLatch2 waitPoint = new CountDownLatch2(1);
+    // 是否存在wait状态下的线程
     protected volatile AtomicBoolean hasNotified = new AtomicBoolean(false);
+    // 是否为停止状态
     protected volatile boolean stopped = false;
 
     public ServiceThread() {
@@ -38,6 +43,7 @@ public abstract class ServiceThread implements Runnable {
 
     public abstract String getServiceName();
 
+    // 开启线程
     public void start() {
         this.thread.start();
     }
@@ -60,9 +66,11 @@ public abstract class ServiceThread implements Runnable {
             }
 
             long beginTime = System.currentTimeMillis();
+            // 如果不是为守护线程的话,直接阻塞当前运行线程指定时间
             if (!this.thread.isDaemon()) {
                 this.thread.join(this.getJointime());
             }
+            // 日志记录join阻塞时间
             long eclipseTime = System.currentTimeMillis() - beginTime;
             log.info("join thread " + this.getServiceName() + " eclipse time(ms) " + eclipseTime + " "
                 + this.getJointime());

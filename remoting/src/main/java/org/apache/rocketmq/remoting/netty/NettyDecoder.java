@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 public class NettyDecoder extends LengthFieldBasedFrameDecoder {
     private static final Logger log = LoggerFactory.getLogger(RemotingHelper.ROCKETMQ_REMOTING);
 
+    // RocketMq最大消息长度
     private static final int FRAME_MAX_LENGTH =
         Integer.parseInt(System.getProperty("com.rocketmq.remoting.frameMaxLength", "16777216"));
 
@@ -40,19 +41,22 @@ public class NettyDecoder extends LengthFieldBasedFrameDecoder {
     public Object decode(ChannelHandlerContext ctx, ByteBuf in) throws Exception {
         ByteBuf frame = null;
         try {
+        	// 解码出消息内容
             frame = (ByteBuf) super.decode(ctx, in);
             if (null == frame) {
                 return null;
             }
 
             ByteBuffer byteBuffer = frame.nioBuffer();
-
+            // 解析生成RemotingCommand对象
             return RemotingCommand.decode(byteBuffer);
         } catch (Exception e) {
             log.error("decode exception, " + RemotingHelper.parseChannelRemoteAddr(ctx.channel()), e);
+            // 出现异常关闭Channel对象
             RemotingUtil.closeChannel(ctx.channel());
         } finally {
             if (null != frame) {
+            	// frame引用计数递减
                 frame.release();
             }
         }

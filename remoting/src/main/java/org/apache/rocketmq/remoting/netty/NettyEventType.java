@@ -16,6 +16,7 @@
  */
 package org.apache.rocketmq.remoting.netty;
 
+// 描述Channel对象的所处状态
 public enum NettyEventType {
     CONNECT,
     CLOSE,

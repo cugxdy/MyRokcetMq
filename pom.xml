@@ -127,7 +127,22 @@
         <module>openmessaging</module>
     </modules>
 
+	<repositories>
+    <repository>
+        <id>nexus-aliyun</id>
+        <name>nexus-aliyun</name>
+        <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+        <releases>
+            <enabled>true</enabled>
+        </releases>
+        <snapshots>
+            <enabled>false</enabled>
+        </snapshots>
+    </repository>
+    </repositories>
+    
     <build>
+    <pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -342,15 +357,11 @@
                     </execution>
                 </executions>
             </plugin>
-        </plugins>
-
-        <pluginManagement>
-            <plugins>
                 <plugin>
-                    <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.0.0</version>
-                </plugin>
-            </plugins>
+                   <artifactId>maven-assembly-plugin</artifactId>
+                   <version>3.0.0</version>
+               </plugin>
+        </plugins>
         </pluginManagement>
     </build>
 

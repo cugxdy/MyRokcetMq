@@ -22,8 +22,10 @@ import org.apache.rocketmq.remoting.annotation.CFNullable;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
 public class RegisterBrokerResponseHeader implements CommandCustomHeader {
+	
     @CFNullable
     private String haServerAddr;
+    
     @CFNullable
     private String masterAddr;
 
