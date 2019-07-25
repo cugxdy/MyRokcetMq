@@ -25,6 +25,7 @@ import org.slf4j.Logger;
  * {@link ShutdownHookThread} is the standard hook for filtersrv and namesrv modules.
  * Through {@link Callable} interface, this hook can customization operations in anywhere.
  */
+// shutdown处理线程对象
 public class ShutdownHookThread extends Thread {
     private volatile boolean hasShutdown = false;
     private AtomicInteger shutdownTimes = new AtomicInteger(0);
