@@ -18,5 +18,6 @@
 package org.apache.rocketmq.common.namesrv;
 
 public class NamesrvUtil {
+	// 注册Broker时使用
     public static final String NAMESPACE_ORDER_TOPIC_CONFIG = "ORDER_TOPIC_CONFIG";
 }

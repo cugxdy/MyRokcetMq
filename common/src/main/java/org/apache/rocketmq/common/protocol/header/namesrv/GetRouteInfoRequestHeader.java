@@ -26,7 +26,7 @@ import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
 public class GetRouteInfoRequestHeader implements CommandCustomHeader {
     @CFNotNull
-    private String topic;
+    private String topic; // Topic名称
 
     @Override
     public void checkFields() throws RemotingCommandException {

@@ -86,34 +86,35 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
                 return this.deleteKVConfig(ctx, request);
             case RequestCode.REGISTER_BROKER: // 注册Broker对象
                 Version brokerVersion = MQVersion.value2Version(request.getVersion());
+                // 当版本号大于3.0.11时
                 if (brokerVersion.ordinal() >= MQVersion.Version.V3_0_11.ordinal()) {
                     return this.registerBrokerWithFilterServer(ctx, request);
                 } else {
                     return this.registerBroker(ctx, request);
                 }
-            case RequestCode.UNREGISTER_BROKER:
-                return this.unregisterBroker(ctx, request);
-            case RequestCode.GET_ROUTEINTO_BY_TOPIC:
-                return this.getRouteInfoByTopic(ctx, request);
-            case RequestCode.GET_BROKER_CLUSTER_INFO:
-                return this.getBrokerClusterInfo(ctx, request);
+            case RequestCode.UNREGISTER_BROKER: // 注销Broker服务器
+                return this.unregisterBroker(ctx, request); 
+            case RequestCode.GET_ROUTEINTO_BY_TOPIC: // 根据Topic获取路由信息
+                return this.getRouteInfoByTopic(ctx, request); 
+            case RequestCode.GET_BROKER_CLUSTER_INFO: // 获取RocketMq集群相关信息
+                return this.getBrokerClusterInfo(ctx, request); 
             case RequestCode.WIPE_WRITE_PERM_OF_BROKER:
                 return this.wipeWritePermOfBroker(ctx, request);
-            case RequestCode.GET_ALL_TOPIC_LIST_FROM_NAMESERVER:
+            case RequestCode.GET_ALL_TOPIC_LIST_FROM_NAMESERVER: // 获取所有的Topic信息
                 return getAllTopicListFromNameserver(ctx, request);
-            case RequestCode.DELETE_TOPIC_IN_NAMESRV:
-                return deleteTopicInNamesrv(ctx, request);
-            case RequestCode.GET_KVLIST_BY_NAMESPACE:
-                return this.getKVListByNamespace(ctx, request);
-            case RequestCode.GET_TOPICS_BY_CLUSTER:
+            case RequestCode.DELETE_TOPIC_IN_NAMESRV: // 从topicQueueTable map中删除topic
+                return deleteTopicInNamesrv(ctx, request); 
+            case RequestCode.GET_KVLIST_BY_NAMESPACE: // 获取指定namespace下key-value键值对对象
+                return this.getKVListByNamespace(ctx, request); 
+            case RequestCode.GET_TOPICS_BY_CLUSTER: // 获取指定集群下所有的Topic形成json格式字符串的字节流数组
                 return this.getTopicsByCluster(ctx, request);
             case RequestCode.GET_SYSTEM_TOPIC_LIST_FROM_NS:
                 return this.getSystemTopicListFromNs(ctx, request);
-            case RequestCode.GET_UNIT_TOPIC_LIST:
+            case RequestCode.GET_UNIT_TOPIC_LIST: // 返回具有FLAG_UNIT标签的Topic集合
                 return this.getUnitTopicList(ctx, request);
-            case RequestCode.GET_HAS_UNIT_SUB_TOPIC_LIST:
+            case RequestCode.GET_HAS_UNIT_SUB_TOPIC_LIST: // 返回具有FLAG_UNIT_SUB标签的Topic集合
                 return this.getHasUnitSubTopicList(ctx, request);
-            case RequestCode.GET_HAS_UNIT_SUB_UNUNIT_TOPIC_LIST:
+            case RequestCode.GET_HAS_UNIT_SUB_UNUNIT_TOPIC_LIST: // 返回具有FLAG_UNIT_SUB标签但是没有FLAG_UNIT标签的Topic集合
                 return this.getHasUnitSubUnUnitTopicList(ctx, request);
             case RequestCode.UPDATE_NAMESRV_CONFIG:
                 return this.updateConfig(ctx, request);
@@ -208,19 +209,24 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
     public RemotingCommand registerBrokerWithFilterServer(ChannelHandlerContext ctx, RemotingCommand request)
         throws RemotingCommandException {
         final RemotingCommand response = RemotingCommand.createResponseCommand(RegisterBrokerResponseHeader.class);
+        // 获取响应处理对象
         final RegisterBrokerResponseHeader responseHeader = (RegisterBrokerResponseHeader) response.readCustomHeader();
+        // 对请求对象进行解码
         final RegisterBrokerRequestHeader requestHeader =
             (RegisterBrokerRequestHeader) request.decodeCommandCustomHeader(RegisterBrokerRequestHeader.class);
 
         RegisterBrokerBody registerBrokerBody = new RegisterBrokerBody();
 
+        // 当body不为空时,即解码成RegisterBrokerBody对象
         if (request.getBody() != null) {
             registerBrokerBody = RegisterBrokerBody.decode(request.getBody(), RegisterBrokerBody.class);
         } else {
+        	// 设置DataVersion对象
             registerBrokerBody.getTopicConfigSerializeWrapper().getDataVersion().setCounter(new AtomicLong(0));
             registerBrokerBody.getTopicConfigSerializeWrapper().getDataVersion().setTimestamp(0);
         }
 
+        // 注册Broker对象
         RegisterBrokerResult result = this.namesrvController.getRouteInfoManager().registerBroker(
             requestHeader.getClusterName(),
             requestHeader.getBrokerAddr(),
@@ -234,6 +240,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
         responseHeader.setHaServerAddr(result.getHaServerAddr());
         responseHeader.setMasterAddr(result.getMasterAddr());
 
+        // 将当前命名空间下的key-value键值对返回给请求方
         byte[] jsonValue = this.namesrvController.getKvConfigManager().getKVListByNamespace(NamesrvUtil.NAMESPACE_ORDER_TOPIC_CONFIG);
         response.setBody(jsonValue);
 
@@ -245,10 +252,14 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
     public RemotingCommand registerBroker(ChannelHandlerContext ctx,
         RemotingCommand request) throws RemotingCommandException {
         final RemotingCommand response = RemotingCommand.createResponseCommand(RegisterBrokerResponseHeader.class);
+        
+        // 获取响应处理对象
         final RegisterBrokerResponseHeader responseHeader = (RegisterBrokerResponseHeader) response.readCustomHeader();
+        // 对请求对象进行解码
         final RegisterBrokerRequestHeader requestHeader =
             (RegisterBrokerRequestHeader) request.decodeCommandCustomHeader(RegisterBrokerRequestHeader.class);
 
+        // 当body不为空时,即解码成RegisterBrokerBody对象
         TopicConfigSerializeWrapper topicConfigWrapper;
         if (request.getBody() != null) {
             topicConfigWrapper = TopicConfigSerializeWrapper.decode(request.getBody(), TopicConfigSerializeWrapper.class);
@@ -258,6 +269,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
             topicConfigWrapper.getDataVersion().setTimestamp(0);
         }
 
+        // 注册Broker对象
         RegisterBrokerResult result = this.namesrvController.getRouteInfoManager().registerBroker(
             requestHeader.getClusterName(),
             requestHeader.getBrokerAddr(),
@@ -272,6 +284,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
         responseHeader.setHaServerAddr(result.getHaServerAddr());
         responseHeader.setMasterAddr(result.getMasterAddr());
 
+        // 将当前命名空间下的key-value键值对返回给请求方
         byte[] jsonValue = this.namesrvController.getKvConfigManager().getKVListByNamespace(NamesrvUtil.NAMESPACE_ORDER_TOPIC_CONFIG);
         response.setBody(jsonValue);
         response.setCode(ResponseCode.SUCCESS);
@@ -279,39 +292,50 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
         return response;
     }
 
+    // 注销Broker服务器
     public RemotingCommand unregisterBroker(ChannelHandlerContext ctx,
         RemotingCommand request) throws RemotingCommandException {
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
         final UnRegisterBrokerRequestHeader requestHeader =
             (UnRegisterBrokerRequestHeader) request.decodeCommandCustomHeader(UnRegisterBrokerRequestHeader.class);
 
+        // 注销Broker服务器
         this.namesrvController.getRouteInfoManager().unregisterBroker(
             requestHeader.getClusterName(),
             requestHeader.getBrokerAddr(),
             requestHeader.getBrokerName(),
             requestHeader.getBrokerId());
 
+        // 设置响应报文
         response.setCode(ResponseCode.SUCCESS);
         response.setRemark(null);
         return response;
     }
 
+    // 根据Topic获取路由信息
     public RemotingCommand getRouteInfoByTopic(ChannelHandlerContext ctx,
         RemotingCommand request) throws RemotingCommandException {
+    	// 创建响应对象
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
+        // 对request对象进行解码
         final GetRouteInfoRequestHeader requestHeader =
             (GetRouteInfoRequestHeader) request.decodeCommandCustomHeader(GetRouteInfoRequestHeader.class);
 
+        // 获取基于Topic的路由信息
         TopicRouteData topicRouteData = this.namesrvController.getRouteInfoManager().pickupTopicRouteData(requestHeader.getTopic());
 
         if (topicRouteData != null) {
+        	// 判断orderMessageEnable是否开启
             if (this.namesrvController.getNamesrvConfig().isOrderMessageEnable()) {
-                String orderTopicConf =
+                
+            	// 从key-value键值对中获取Topic相关value对象
+            	String orderTopicConf =
                     this.namesrvController.getKvConfigManager().getKVConfig(NamesrvUtil.NAMESPACE_ORDER_TOPIC_CONFIG,
                         requestHeader.getTopic());
                 topicRouteData.setOrderTopicConf(orderTopicConf);
             }
 
+            // 设置响应报文数据
             byte[] content = topicRouteData.encode();
             response.setBody(content);
             response.setCode(ResponseCode.SUCCESS);
@@ -319,60 +343,77 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
             return response;
         }
 
+        // 当topicRouteData为空,即与Topic相关的信息不存在时,返回如下响应报文数据
         response.setCode(ResponseCode.TOPIC_NOT_EXIST);
         response.setRemark("No topic route info in name server for the topic: " + requestHeader.getTopic()
             + FAQUrl.suggestTodo(FAQUrl.APPLY_TOPIC_URL));
         return response;
     }
 
+    // 获取RocketMq集群相关信息
     private RemotingCommand getBrokerClusterInfo(ChannelHandlerContext ctx, RemotingCommand request) {
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
 
+        // 返回RocketMq集群相关信息
         byte[] content = this.namesrvController.getRouteInfoManager().getAllClusterInfo();
         response.setBody(content);
 
+        // 设置响应报文数据
         response.setCode(ResponseCode.SUCCESS);
         response.setRemark(null);
         return response;
     }
 
+    // 擦除Broker的相关写功能
     private RemotingCommand wipeWritePermOfBroker(ChannelHandlerContext ctx,
         RemotingCommand request) throws RemotingCommandException {
         final RemotingCommand response = RemotingCommand.createResponseCommand(WipeWritePermOfBrokerResponseHeader.class);
+        
         final WipeWritePermOfBrokerResponseHeader responseHeader = (WipeWritePermOfBrokerResponseHeader) response.readCustomHeader();
+        
+        // 将netty返回对象解码成WipeWritePermOfBrokerRequestHeader对象
         final WipeWritePermOfBrokerRequestHeader requestHeader =
             (WipeWritePermOfBrokerRequestHeader) request.decodeCommandCustomHeader(WipeWritePermOfBrokerRequestHeader.class);
 
+        // 进行擦除操作
         int wipeTopicCnt = this.namesrvController.getRouteInfoManager().wipeWritePermOfBrokerByLock(requestHeader.getBrokerName());
 
+        // 日志记录器
         log.info("wipe write perm of broker[{}], client: {}, {}",
             requestHeader.getBrokerName(),
             RemotingHelper.parseChannelRemoteAddr(ctx.channel()),
             wipeTopicCnt);
 
+        // 设置响应报文数据
         responseHeader.setWipeTopicCount(wipeTopicCnt);
         response.setCode(ResponseCode.SUCCESS);
         response.setRemark(null);
         return response;
     }
 
+    // 获得所有的Topic
     private RemotingCommand getAllTopicListFromNameserver(ChannelHandlerContext ctx, RemotingCommand request) {
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
 
+        // 获取所有的Topic
         byte[] body = this.namesrvController.getRouteInfoManager().getAllTopicList();
 
+        // 设置响应报文
         response.setBody(body);
         response.setCode(ResponseCode.SUCCESS);
         response.setRemark(null);
         return response;
     }
-
+    
+    // 从topicQueueTable map中删除topic
     private RemotingCommand deleteTopicInNamesrv(ChannelHandlerContext ctx,
         RemotingCommand request) throws RemotingCommandException {
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
+        // 根据netty返回的对象解码成DeleteTopicInNamesrvRequestHeader对象
         final DeleteTopicInNamesrvRequestHeader requestHeader =
             (DeleteTopicInNamesrvRequestHeader) request.decodeCommandCustomHeader(DeleteTopicInNamesrvRequestHeader.class);
-
+        
+        // 从topicQueueTable map中删除topic
         this.namesrvController.getRouteInfoManager().deleteTopic(requestHeader.getTopic());
 
         response.setCode(ResponseCode.SUCCESS);
@@ -380,12 +421,15 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
         return response;
     }
 
+    // 获取指定namespace下key-value键值对对象
     private RemotingCommand getKVListByNamespace(ChannelHandlerContext ctx,
         RemotingCommand request) throws RemotingCommandException {
-        final RemotingCommand response = RemotingCommand.createResponseCommand(null);
+        
+    	final RemotingCommand response = RemotingCommand.createResponseCommand(null);
         final GetKVListByNamespaceRequestHeader requestHeader =
             (GetKVListByNamespaceRequestHeader) request.decodeCommandCustomHeader(GetKVListByNamespaceRequestHeader.class);
 
+        // 获取指定namespace下key-value键值对对象
         byte[] jsonValue = this.namesrvController.getKvConfigManager().getKVListByNamespace(
             requestHeader.getNamespace());
         if (null != jsonValue) {
@@ -405,7 +449,8 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
         final GetTopicsByClusterRequestHeader requestHeader =
             (GetTopicsByClusterRequestHeader) request.decodeCommandCustomHeader(GetTopicsByClusterRequestHeader.class);
-
+        
+        // 获取指定集群下所有的Topic形成json格式字符串的字节流数组
         byte[] body = this.namesrvController.getRouteInfoManager().getTopicsByCluster(requestHeader.getCluster());
 
         response.setBody(body);
@@ -426,6 +471,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
         return response;
     }
 
+    // 返回具有FLAG_UNIT标签的Topic集合
     private RemotingCommand getUnitTopicList(ChannelHandlerContext ctx,
         RemotingCommand request) throws RemotingCommandException {
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
@@ -438,6 +484,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
         return response;
     }
 
+    // 返回具有FLAG_UNIT_SUB标签的Topic集合
     private RemotingCommand getHasUnitSubTopicList(ChannelHandlerContext ctx,
         RemotingCommand request) throws RemotingCommandException {
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
@@ -449,7 +496,8 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
         response.setRemark(null);
         return response;
     }
-
+    
+    // 返回具有FLAG_UNIT_SUB标签但是没有FLAG_UNIT标签的Topic集合
     private RemotingCommand getHasUnitSubUnUnitTopicList(ChannelHandlerContext ctx, RemotingCommand request)
         throws RemotingCommandException {
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
@@ -462,7 +510,9 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
         return response;
     }
 
-    private RemotingCommand updateConfig(ChannelHandlerContext ctx, RemotingCommand request) {
+    // 更新配置
+    @SuppressWarnings("unused")
+	private RemotingCommand updateConfig(ChannelHandlerContext ctx, RemotingCommand request) {
         log.info("updateConfig called by {}", RemotingHelper.parseChannelRemoteAddr(ctx.channel()));
 
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
@@ -471,6 +521,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
         if (body != null) {
             String bodyStr;
             try {
+            	// 以UTF-8进行编码
                 bodyStr = new String(body, MixAll.DEFAULT_CHARSET);
             } catch (UnsupportedEncodingException e) {
                 log.error("updateConfig byte array to string error: ", e);
@@ -480,14 +531,17 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
             }
 
             if (bodyStr == null) {
+            	// body为空
                 log.error("updateConfig get null body!");
                 response.setCode(ResponseCode.SYSTEM_ERROR);
                 response.setRemark("string2Properties error");
                 return response;
             }
 
+            // 解析key-value键值对
             Properties properties = MixAll.string2Properties(bodyStr);
             if (properties == null) {
+            	// 解析失败
                 log.error("updateConfig MixAll.string2Properties error {}", bodyStr);
                 response.setCode(ResponseCode.SYSTEM_ERROR);
                 response.setRemark("string2Properties error");
@@ -497,11 +551,13 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
             this.namesrvController.getConfiguration().update(properties);
         }
 
+        // 设置响应报文
         response.setCode(ResponseCode.SUCCESS);
         response.setRemark(null);
         return response;
     }
 
+    // 获取所有的配置选项
     private RemotingCommand getConfig(ChannelHandlerContext ctx, RemotingCommand request) {
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
 

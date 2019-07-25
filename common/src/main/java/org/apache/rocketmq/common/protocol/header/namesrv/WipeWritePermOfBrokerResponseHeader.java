@@ -21,8 +21,9 @@ import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
 public class WipeWritePermOfBrokerResponseHeader implements CommandCustomHeader {
-    @CFNotNull
-    private Integer wipeTopicCount;
+    
+	@CFNotNull
+    private Integer wipeTopicCount; // 擦除Topic写计数器
 
     @Override
     public void checkFields() throws RemotingCommandException {
