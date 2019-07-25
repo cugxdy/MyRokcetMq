@@ -22,10 +22,11 @@ import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
 public class GetKVConfigRequestHeader implements CommandCustomHeader {
+    
+	@CFNotNull
+    private String namespace; // 命名空间
     @CFNotNull
-    private String namespace;
-    @CFNotNull
-    private String key;
+    private String key; // key对象
 
     @Override
     public void checkFields() throws RemotingCommandException {

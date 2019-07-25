@@ -17,6 +17,8 @@
 
 package org.apache.rocketmq.common.protocol;
 
+
+// netty服务通信请求类型
 public class RequestCode {
 
     public static final int SEND_MESSAGE = 10;

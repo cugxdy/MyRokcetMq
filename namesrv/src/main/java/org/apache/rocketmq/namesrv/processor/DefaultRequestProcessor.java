@@ -18,6 +18,7 @@ package org.apache.rocketmq.namesrv.processor;
 
 import io.netty.channel.ChannelHandlerContext;
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.rocketmq.common.MQVersion;
@@ -54,8 +55,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DefaultRequestProcessor implements NettyRequestProcessor {
-    private static final Logger log = LoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
+    // 日志记录器
+	private static final Logger log = LoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
 
+    // NamesrvController控制器
     protected final NamesrvController namesrvController;
 
     public DefaultRequestProcessor(NamesrvController namesrvController) {
@@ -65,21 +68,23 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
     @Override
     public RemotingCommand processRequest(ChannelHandlerContext ctx,
         RemotingCommand request) throws RemotingCommandException {
-        if (log.isDebugEnabled()) {
+        // 日志记录器
+    	if (log.isDebugEnabled()) {
             log.debug("receive request, {} {} {}",
                 request.getCode(),
                 RemotingHelper.parseChannelRemoteAddr(ctx.channel()),
                 request);
         }
 
+    	// 根据code去调用不同的程序,不同的处理程序,请求分发
         switch (request.getCode()) {
-            case RequestCode.PUT_KV_CONFIG:
+            case RequestCode.PUT_KV_CONFIG: // 存储key-value键值对
                 return this.putKVConfig(ctx, request);
-            case RequestCode.GET_KV_CONFIG:
+            case RequestCode.GET_KV_CONFIG: // 获取key-value键值对
                 return this.getKVConfig(ctx, request);
-            case RequestCode.DELETE_KV_CONFIG:
+            case RequestCode.DELETE_KV_CONFIG: // 删除key-value键值对
                 return this.deleteKVConfig(ctx, request);
-            case RequestCode.REGISTER_BROKER:
+            case RequestCode.REGISTER_BROKER: // 注册Broker对象
                 Version brokerVersion = MQVersion.value2Version(request.getVersion());
                 if (brokerVersion.ordinal() >= MQVersion.Version.V3_0_11.ordinal()) {
                     return this.registerBrokerWithFilterServer(ctx, request);
@@ -127,28 +132,39 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
 
     public RemotingCommand putKVConfig(ChannelHandlerContext ctx,
         RemotingCommand request) throws RemotingCommandException {
+    	
+    	// 创建响应报文
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
+        
+        // 依据HashMap<String, String>创建PutKVConfigRequestHeader对象
         final PutKVConfigRequestHeader requestHeader =
             (PutKVConfigRequestHeader) request.decodeCommandCustomHeader(PutKVConfigRequestHeader.class);
 
+        // 设置并添加至Map集合中
         this.namesrvController.getKvConfigManager().putKVConfig(
             requestHeader.getNamespace(),
             requestHeader.getKey(),
             requestHeader.getValue()
         );
 
+        // 设置响应报文
         response.setCode(ResponseCode.SUCCESS);
         response.setRemark(null);
         return response;
     }
 
+    // 获取key-value键值对
     public RemotingCommand getKVConfig(ChannelHandlerContext ctx,
         RemotingCommand request) throws RemotingCommandException {
+    	// 创建基于GetKVConfigResponseHeader响应报文
         final RemotingCommand response = RemotingCommand.createResponseCommand(GetKVConfigResponseHeader.class);
+        // 获取GetKVConfigResponseHeader对象
         final GetKVConfigResponseHeader responseHeader = (GetKVConfigResponseHeader) response.readCustomHeader();
+        // 将请求报文解码成GetKVConfigRequestHeader对象
         final GetKVConfigRequestHeader requestHeader =
             (GetKVConfigRequestHeader) request.decodeCommandCustomHeader(GetKVConfigRequestHeader.class);
 
+        // 获取值对象
         String value = this.namesrvController.getKvConfigManager().getKVConfig(
             requestHeader.getNamespace(),
             requestHeader.getKey()
@@ -156,27 +172,34 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
 
         if (value != null) {
             responseHeader.setValue(value);
+            // 设置响应报文
             response.setCode(ResponseCode.SUCCESS);
             response.setRemark(null);
             return response;
         }
 
+        // 设置响应报文
         response.setCode(ResponseCode.QUERY_NOT_FOUND);
         response.setRemark("No config item, Namespace: " + requestHeader.getNamespace() + " Key: " + requestHeader.getKey());
         return response;
     }
 
+    // 删除key-value键值对
     public RemotingCommand deleteKVConfig(ChannelHandlerContext ctx,
         RemotingCommand request) throws RemotingCommandException {
+    	// 创建响应报文
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
+        // 创建响应报文
         final DeleteKVConfigRequestHeader requestHeader =
             (DeleteKVConfigRequestHeader) request.decodeCommandCustomHeader(DeleteKVConfigRequestHeader.class);
 
+        // 删除指定key对象
         this.namesrvController.getKvConfigManager().deleteKVConfig(
             requestHeader.getNamespace(),
             requestHeader.getKey()
         );
 
+        // 设置响应报文
         response.setCode(ResponseCode.SUCCESS);
         response.setRemark(null);
         return response;

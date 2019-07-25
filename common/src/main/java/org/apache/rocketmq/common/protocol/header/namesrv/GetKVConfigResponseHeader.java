@@ -23,7 +23,7 @@ import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
 public class GetKVConfigResponseHeader implements CommandCustomHeader {
     @CFNullable
-    private String value;
+    private String value; // value对象
 
     @Override
     public void checkFields() throws RemotingCommandException {

@@ -150,6 +150,7 @@ public class RemotingHelper {
         }
     }
 
+    // 解析远程连接主机地址
     public static String parseChannelRemoteAddr(final Channel channel) {
         if (null == channel) {
             return "";

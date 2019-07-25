@@ -23,9 +23,9 @@ import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
 public class DeleteKVConfigRequestHeader implements CommandCustomHeader {
     @CFNotNull
-    private String namespace;
+    private String namespace; // 命名空间
     @CFNotNull
-    private String key;
+    private String key; // key 对象
 
     @Override
     public void checkFields() throws RemotingCommandException {
