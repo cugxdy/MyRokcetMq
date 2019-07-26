@@ -31,7 +31,7 @@ public class ShutdownHookThread extends Thread {
     private AtomicInteger shutdownTimes = new AtomicInteger(0);
     private final Logger log;
     private final Callable callback;
-
+ 
     /**
      * Create the standard hook thread, with a call back, by using {@link Callable} interface.
      *

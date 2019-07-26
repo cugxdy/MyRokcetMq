@@ -361,6 +361,7 @@ public class UtilAll {
         return str;
     }
 
+    // 判断字符串对象是否为空
     public static boolean isBlank(String str) {
         int strLen;
         if (str == null || (strLen = str.length()) == 0) {

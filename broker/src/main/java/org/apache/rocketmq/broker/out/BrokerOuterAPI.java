@@ -97,6 +97,7 @@ public class BrokerOuterAPI {
         this.remotingClient.updateNameServerAddressList(lst);
     }
 
+    // 向namesrv服务器注册broker元数据
     public RegisterBrokerResult registerBrokerAll(
         final String clusterName,
         final String brokerAddr,
@@ -107,18 +108,24 @@ public class BrokerOuterAPI {
         final List<String> filterServerList,
         final boolean oneway,
         final int timeoutMills) {
+    	
         RegisterBrokerResult registerBrokerResult = null;
 
+        // 获取namesrv服务器地址
         List<String> nameServerAddressList = this.remotingClient.getNameServerAddressList();
         if (nameServerAddressList != null) {
+        	
             for (String namesrvAddr : nameServerAddressList) {
                 try {
+                	
+                	// 注册Broker信息
                     RegisterBrokerResult result = this.registerBroker(namesrvAddr, clusterName, brokerAddr, brokerName, brokerId,
                         haServerAddr, topicConfigWrapper, filterServerList, oneway, timeoutMills);
                     if (result != null) {
                         registerBrokerResult = result;
                     }
-
+                    
+                    // 日志记录register nameserver服务器成功
                     log.info("register broker to name server {} OK", namesrvAddr);
                 } catch (Exception e) {
                     log.warn("registerBroker Exception, {}", namesrvAddr, e);
@@ -142,17 +149,22 @@ public class BrokerOuterAPI {
         final int timeoutMills
     ) throws RemotingCommandException, MQBrokerException, RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException,
         InterruptedException {
+
+    	// 创建请求报文数据
         RegisterBrokerRequestHeader requestHeader = new RegisterBrokerRequestHeader();
         requestHeader.setBrokerAddr(brokerAddr);
         requestHeader.setBrokerId(brokerId);
         requestHeader.setBrokerName(brokerName);
         requestHeader.setClusterName(clusterName);
         requestHeader.setHaServerAddr(haServerAddr);
+        
+        // 创建RemotingCommand对象
         RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.REGISTER_BROKER, requestHeader);
 
         RegisterBrokerBody requestBody = new RegisterBrokerBody();
         requestBody.setTopicConfigSerializeWrapper(topicConfigWrapper);
         requestBody.setFilterServerList(filterServerList);
+        // 设置body数据
         request.setBody(requestBody.encode());
 
         if (oneway) {
@@ -164,16 +176,20 @@ public class BrokerOuterAPI {
             return null;
         }
 
+        // 发起TCP请求,获取响应报文
         RemotingCommand response = this.remotingClient.invokeSync(namesrvAddr, request, timeoutMills);
+        
         assert response != null;
         switch (response.getCode()) {
             case ResponseCode.SUCCESS: {
                 RegisterBrokerResponseHeader responseHeader =
                     (RegisterBrokerResponseHeader) response.decodeCommandCustomHeader(RegisterBrokerResponseHeader.class);
                 RegisterBrokerResult result = new RegisterBrokerResult();
+                // 设置Master服务器与HA服务器地址
                 result.setMasterAddr(responseHeader.getMasterAddr());
                 result.setHaServerAddr(responseHeader.getHaServerAddr());
                 if (response.getBody() != null) {
+                	// 设置key-value键值对
                     result.setKvTable(KVTable.decode(response.getBody(), KVTable.class));
                 }
                 return result;

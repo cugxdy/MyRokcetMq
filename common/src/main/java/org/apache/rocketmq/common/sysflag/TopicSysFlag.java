@@ -18,17 +18,21 @@ package org.apache.rocketmq.common.sysflag;
 
 public class TopicSysFlag {
 
+	// 0000 0001 = FLAG_UNIT
     private final static int FLAG_UNIT = 0x1 << 0;
 
+    // 0000 0010 = FLAG_UNIT_SUB
     private final static int FLAG_UNIT_SUB = 0x1 << 1;
 
     public static int buildSysFlag(final boolean unit, final boolean hasUnitSub) {
         int sysFlag = 0;
 
+        // 设置FLAG_UNIT标识位
         if (unit) {
             sysFlag |= FLAG_UNIT;
         }
 
+        // 设置FLAG_UNIT_SUB标识位
         if (hasUnitSub) {
             sysFlag |= FLAG_UNIT_SUB;
         }
@@ -36,10 +40,18 @@ public class TopicSysFlag {
         return sysFlag;
     }
 
+    // 设置FLAG_UNIT标识位
+    // 0000 0000 | 0000 0001 = 0000 0001
+    // 0000 0001 | 0000 0001 = 0000 0001
     public static int setUnitFlag(final int sysFlag) {
         return sysFlag | FLAG_UNIT;
     }
+    
 
+    // 擦除FLAG_UNIT标识位
+    // ~FLAG_UNIT = 1111 1110
+    // 0000 0000 & 1111 1110 = 0000 0000
+    // 0000 0001 & 1111 1110 = 0000 0000
     public static int clearUnitFlag(final int sysFlag) {
         return sysFlag & (~FLAG_UNIT);
     }

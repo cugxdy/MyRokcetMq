@@ -33,6 +33,7 @@ public class TopicConfig {
     // 写队列数目
     private int writeQueueNums = defaultWriteQueueNums;
     
+    // 默认可读写
     private int perm = PermName.PERM_READ | PermName.PERM_WRITE;
     
     private TopicFilterType topicFilterType = TopicFilterType.SINGLE_TAG;

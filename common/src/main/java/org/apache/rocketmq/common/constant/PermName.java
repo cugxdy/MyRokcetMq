@@ -16,11 +16,12 @@
  */
 package org.apache.rocketmq.common.constant;
 
+// 设置Topic对象的读写权限
 public class PermName {
 	
     public static final int PERM_PRIORITY = 0x1 << 3;
-    public static final int PERM_READ = 0x1 << 2;
-    public static final int PERM_WRITE = 0x1 << 1;
+    public static final int PERM_READ = 0x1 << 2;  // 可读
+    public static final int PERM_WRITE = 0x1 << 1; // 可写
     public static final int PERM_INHERIT = 0x1 << 0;
 
     public static String perm2String(final int perm) {
@@ -40,14 +41,17 @@ public class PermName {
         return sb.toString();
     }
 
+    // 判断是否可读
     public static boolean isReadable(final int perm) {
         return (perm & PERM_READ) == PERM_READ;
     }
 
+    // 判断是否可写
     public static boolean isWriteable(final int perm) {
         return (perm & PERM_WRITE) == PERM_WRITE;
     }
 
+    
     public static boolean isInherited(final int perm) {
         return (perm & PERM_INHERIT) == PERM_INHERIT;
     }

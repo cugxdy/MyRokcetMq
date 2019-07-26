@@ -26,12 +26,16 @@ public class BrokerStats {
 
     private final DefaultMessageStore defaultMessageStore;
 
+    // 昨早put消息总数
     private volatile long msgPutTotalYesterdayMorning;
 
+    // 今早put消息总数
     private volatile long msgPutTotalTodayMorning;
 
+    // 昨早get消息总数
     private volatile long msgGetTotalYesterdayMorning;
 
+    // 今早get消息总数
     private volatile long msgGetTotalTodayMorning;
 
     public BrokerStats(DefaultMessageStore defaultMessageStore) {
@@ -39,6 +43,7 @@ public class BrokerStats {
     }
 
     public void record() {
+    	// 更新昨早get与put消息总数
         this.msgPutTotalYesterdayMorning = this.msgPutTotalTodayMorning;
         this.msgGetTotalYesterdayMorning = this.msgGetTotalTodayMorning;
 

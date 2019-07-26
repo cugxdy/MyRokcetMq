@@ -17,14 +17,14 @@
 package org.apache.rocketmq.store;
 
 public enum PutMessageStatus {
-    PUT_OK,
-    FLUSH_DISK_TIMEOUT,
-    FLUSH_SLAVE_TIMEOUT,
-    SLAVE_NOT_AVAILABLE,
-    SERVICE_NOT_AVAILABLE,
-    CREATE_MAPEDFILE_FAILED,
-    MESSAGE_ILLEGAL,
-    PROPERTIES_SIZE_EXCEEDED,
-    OS_PAGECACHE_BUSY,
-    UNKNOWN_ERROR,
+    PUT_OK, // 成功
+    FLUSH_DISK_TIMEOUT, // 写磁盘超时
+    FLUSH_SLAVE_TIMEOUT, // 同步从服务器失败
+    SLAVE_NOT_AVAILABLE, // 从服务器不可获得
+    SERVICE_NOT_AVAILABLE, // 服务不可用
+    CREATE_MAPEDFILE_FAILED, // 创建Map映射文件失败
+    MESSAGE_ILLEGAL, // 
+    PROPERTIES_SIZE_EXCEEDED, // 
+    OS_PAGECACHE_BUSY, // 系统繁忙
+    UNKNOWN_ERROR,  // 未知错误
 }

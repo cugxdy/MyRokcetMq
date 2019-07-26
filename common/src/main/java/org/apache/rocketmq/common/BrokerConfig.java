@@ -41,10 +41,15 @@ public class BrokerConfig {
     
     @ImportantField
     private String brokerClusterName = "DefaultCluster"; // Broker集群名称
+    
     @ImportantField
     private long brokerId = MixAll.MASTER_ID; // Master名称号
+    
+    // Broker读写权限
     private int brokerPermission = PermName.PERM_READ | PermName.PERM_WRITE;
+    
     private int defaultTopicQueueNums = 8; // 默认Topic计数
+    
     @ImportantField
     private boolean autoCreateTopicEnable = true; // 自动创建Topic为true
 

@@ -25,6 +25,9 @@ public class PutMessageSpinLock implements PutMessageLock {
     //true: Can lock, false : in lock.
     private AtomicBoolean putMessageSpinLock = new AtomicBoolean(true);
 
+    // 基于CAS的自旋锁
+    // putMessageSpinLock状态设置为false,当设置失败时,while循环设置
+    // 当设置为false成功时,即返回,即表示获得锁成功
     @Override
     public void lock() {
         boolean flag;

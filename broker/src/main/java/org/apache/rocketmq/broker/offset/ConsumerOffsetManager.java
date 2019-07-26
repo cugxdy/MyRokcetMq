@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 public class ConsumerOffsetManager extends ConfigManager {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
+    // topic与group分隔符
     private static final String TOPIC_GROUP_SEPARATOR = "@";
 
     private ConcurrentMap<String/* topic@group */, ConcurrentMap<Integer, Long>> offsetTable =
@@ -45,14 +46,17 @@ public class ConsumerOffsetManager extends ConfigManager {
     public ConsumerOffsetManager() {
     }
 
+    // 创建ConsumerOffsetManager对象
     public ConsumerOffsetManager(BrokerController brokerController) {
         this.brokerController = brokerController;
     }
 
     public void scanUnsubscribedTopic() {
+    	
         Iterator<Entry<String, ConcurrentMap<Integer, Long>>> it = this.offsetTable.entrySet().iterator();
         while (it.hasNext()) {
             Entry<String, ConcurrentMap<Integer, Long>> next = it.next();
+            
             String topicAtGroup = next.getKey();
             String[] arrays = topicAtGroup.split(TOPIC_GROUP_SEPARATOR);
             if (arrays.length == 2) {
@@ -61,13 +65,15 @@ public class ConsumerOffsetManager extends ConfigManager {
 
                 if (null == brokerController.getConsumerManager().findSubscriptionData(group, topic)
                     && this.offsetBehindMuchThanData(topic, next.getValue())) {
-                    it.remove();
+                    // 删除这个元素
+                	it.remove();
                     log.warn("remove topic offset, {}", topicAtGroup);
                 }
             }
         }
     }
 
+    // 判断偏移量大小
     private boolean offsetBehindMuchThanData(final String topic, ConcurrentMap<Integer, Long> table) {
         Iterator<Entry<Integer, Long>> it = table.entrySet().iterator();
         boolean result = !table.isEmpty();
@@ -76,21 +82,26 @@ public class ConsumerOffsetManager extends ConfigManager {
             Entry<Integer, Long> next = it.next();
             long minOffsetInStore = this.brokerController.getMessageStore().getMinOffsetInQueue(topic, next.getKey());
             long offsetInPersist = next.getValue();
+            
             result = offsetInPersist <= minOffsetInStore;
         }
 
         return result;
     }
 
+    // 获取group所持有Topic
     public Set<String> whichTopicByConsumer(final String group) {
         Set<String> topics = new HashSet<String>();
 
+        // 偏移量
         Iterator<Entry<String, ConcurrentMap<Integer, Long>>> it = this.offsetTable.entrySet().iterator();
         while (it.hasNext()) {
             Entry<String, ConcurrentMap<Integer, Long>> next = it.next();
             String topicAtGroup = next.getKey();
+            // 以@作为分隔符分隔
             String[] arrays = topicAtGroup.split(TOPIC_GROUP_SEPARATOR);
             if (arrays.length == 2) {
+            	// 判断参数topic与Map集合中group是否一致
                 if (group.equals(arrays[1])) {
                     topics.add(arrays[0]);
                 }
@@ -100,6 +111,7 @@ public class ConsumerOffsetManager extends ConfigManager {
         return topics;
     }
 
+    // 获取topic下所有的group集合对象
     public Set<String> whichGroupByTopic(final String topic) {
         Set<String> groups = new HashSet<String>();
 
@@ -107,8 +119,10 @@ public class ConsumerOffsetManager extends ConfigManager {
         while (it.hasNext()) {
             Entry<String, ConcurrentMap<Integer, Long>> next = it.next();
             String topicAtGroup = next.getKey();
+            // 以@作为分隔符分隔
             String[] arrays = topicAtGroup.split(TOPIC_GROUP_SEPARATOR);
             if (arrays.length == 2) {
+            	// 判断参数topic与Map集合中topic是否一致
                 if (topic.equals(arrays[0])) {
                     groups.add(arrays[1]);
                 }
@@ -118,6 +132,7 @@ public class ConsumerOffsetManager extends ConfigManager {
         return groups;
     }
 
+    // 更新偏移量
     public void commitOffset(final String clientHost, final String group, final String topic, final int queueId,
         final long offset) {
         // topic@group
@@ -125,20 +140,25 @@ public class ConsumerOffsetManager extends ConfigManager {
         this.commitOffset(clientHost, key, queueId, offset);
     }
 
+    // 更新偏移量
     private void commitOffset(final String clientHost, final String key, final int queueId, final long offset) {
         ConcurrentMap<Integer, Long> map = this.offsetTable.get(key);
         if (null == map) {
+        	// 更新偏移量
             map = new ConcurrentHashMap<Integer, Long>(32);
             map.put(queueId, offset);
             this.offsetTable.put(key, map);
         } else {
+        	// 存储偏移量
             Long storeOffset = map.put(queueId, offset);
+            // 当offset小于storeOffset,可能出现重复消费
             if (storeOffset != null && offset < storeOffset) {
                 log.warn("[NOTIFYME]update consumer offset less than store. clientHost={}, key={}, queueId={}, requestOffset={}, storeOffset={}", clientHost, key, queueId, offset, storeOffset);
             }
         }
     }
 
+    // 查询topic@group下指定queueId的索引
     public long queryOffset(final String group, final String topic, final int queueId) {
         // topic@group
         String key = topic + TOPIC_GROUP_SEPARATOR + group;
@@ -152,11 +172,12 @@ public class ConsumerOffsetManager extends ConfigManager {
         return -1;
     }
 
+    // 编码
     public String encode() {
         return this.encode(false);
     }
 
-    @Override
+    @Override // 获取配置文件路径
     public String configFilePath() {
         return BrokerPathConfigHelper.getConsumerOffsetPath(this.brokerController.getMessageStoreConfig().getStorePathRootDir());
     }
@@ -175,19 +196,25 @@ public class ConsumerOffsetManager extends ConfigManager {
         return RemotingSerializable.toJson(this, prettyFormat);
     }
 
+    // 获取偏移量对象
     public ConcurrentMap<String, ConcurrentMap<Integer, Long>> getOffsetTable() {
         return offsetTable;
     }
 
+    // 设置偏移量对象
     public void setOffsetTable(ConcurrentHashMap<String, ConcurrentMap<Integer, Long>> offsetTable) {
         this.offsetTable = offsetTable;
     }
 
+    // 当ConsumerOffsetManager中偏移量大于MessageStore对象中的偏移量时
+    // 获取每个队列的最小偏移量集合Map对象
     public Map<Integer, Long> queryMinOffsetInAllGroup(final String topic, final String filterGroups) {
 
         Map<Integer, Long> queueMinOffset = new HashMap<Integer, Long>();
         Set<String> topicGroups = this.offsetTable.keySet();
+        // 判断是否为空
         if (!UtilAll.isBlank(filterGroups)) {
+        	// 过滤掉指定group集合
             for (String group : filterGroups.split(",")) {
                 Iterator<String> it = topicGroups.iterator();
                 while (it.hasNext()) {
@@ -198,14 +225,19 @@ public class ConsumerOffsetManager extends ConfigManager {
             }
         }
 
+        
         for (Map.Entry<String, ConcurrentMap<Integer, Long>> offSetEntry : this.offsetTable.entrySet()) {
             String topicGroup = offSetEntry.getKey();
             String[] topicGroupArr = topicGroup.split(TOPIC_GROUP_SEPARATOR);
+            // 当指定topic相等时
             if (topic.equals(topicGroupArr[0])) {
                 for (Entry<Integer, Long> entry : offSetEntry.getValue().entrySet()) {
+                	// 获取在MessageStore对象中id=entry.getKey()的偏移量
                     long minOffset = this.brokerController.getMessageStore().getMinOffsetInQueue(topic, entry.getKey());
+                    // 当ConsumerOffsetManager中偏移量大于MessageStore对象中的偏移量时
                     if (entry.getValue() >= minOffset) {
                         Long offset = queueMinOffset.get(entry.getKey());
+                        // 将key-value键值对存入queueMinOffset对象中
                         if (offset == null) {
                             queueMinOffset.put(entry.getKey(), Math.min(Long.MAX_VALUE, entry.getValue()));
                         } else {
@@ -219,12 +251,14 @@ public class ConsumerOffsetManager extends ConfigManager {
         return queueMinOffset;
     }
 
+    // 查询topic@group下所有的偏移量Map对象
     public Map<Integer, Long> queryOffset(final String group, final String topic) {
         // topic@group
         String key = topic + TOPIC_GROUP_SEPARATOR + group;
         return this.offsetTable.get(key);
     }
 
+    // clone至另一个group对象中去
     public void cloneOffset(final String srcGroup, final String destGroup, final String topic) {
         ConcurrentMap<Integer, Long> offsets = this.offsetTable.get(topic + TOPIC_GROUP_SEPARATOR + srcGroup);
         if (offsets != null) {

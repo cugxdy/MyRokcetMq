@@ -35,13 +35,19 @@ import org.slf4j.LoggerFactory;
 public class ConsumerGroupInfo {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
     private final String groupName;
+    
     private final ConcurrentMap<String/* Topic */, SubscriptionData> subscriptionTable =
         new ConcurrentHashMap<String, SubscriptionData>();
+    
     private final ConcurrentMap<Channel, ClientChannelInfo> channelInfoTable =
         new ConcurrentHashMap<Channel, ClientChannelInfo>(16);
+    
     private volatile ConsumeType consumeType;
     private volatile MessageModel messageModel;
+    
     private volatile ConsumeFromWhere consumeFromWhere;
+    
+    // 最近更新时间
     private volatile long lastUpdateTimestamp = System.currentTimeMillis();
 
     public ConsumerGroupInfo(String groupName, ConsumeType consumeType, MessageModel messageModel,
@@ -206,6 +212,7 @@ public class ConsumerGroupInfo {
         return subscriptionTable.keySet();
     }
 
+    // 获取SubscriptionData对象
     public SubscriptionData findSubscriptionData(final String topic) {
         return this.subscriptionTable.get(topic);
     }

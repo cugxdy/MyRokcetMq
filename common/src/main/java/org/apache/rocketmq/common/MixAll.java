@@ -79,6 +79,8 @@ public class MixAll {
     public static final String LOCALHOST = localhost();
     // 字符串编码格式
     public static final String DEFAULT_CHARSET = "UTF-8";
+    
+    // 主服务器ID
     public static final long MASTER_ID = 0L;
     public static final long CURRENT_JVM_PID = getPID();
 

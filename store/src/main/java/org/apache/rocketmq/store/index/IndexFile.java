@@ -29,13 +29,18 @@ import org.slf4j.LoggerFactory;
 
 public class IndexFile {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
+    // 哈希槽大小
     private static int hashSlotSize = 4;
     private static int indexSize = 20;
     private static int invalidIndex = 0;
+    // 哈希槽计数
     private final int hashSlotNum;
     private final int indexNum;
+    
+    // 内存映射文件(java Nio)
     private final MappedFile mappedFile;
     private final FileChannel fileChannel;
+    // ByteBuffer对象
     private final MappedByteBuffer mappedByteBuffer;
     private final IndexHeader indexHeader;
 
