@@ -33,8 +33,11 @@ public class BloomFilter {
     private int n = 128;
 
     // hash function num, by calculation.
+    // 哈希函数个数
     private int k;
+    
     // bit count, by calculation.
+    // 布隆过滤器长度
     private int m;
 
     /**
@@ -43,6 +46,7 @@ public class BloomFilter {
      * @param f error rate
      * @param n num will mapping to bit
      */
+    // 创建布隆过滤器
     public static BloomFilter createByFn(int f, int n) {
         return new BloomFilter(f, n);
     }
@@ -54,6 +58,7 @@ public class BloomFilter {
      * @param n num will mapping to bit
      */
     private BloomFilter(int f, int n) {
+    	// 验证输入参数
         if (f < 1 || f >= 100) {
             throw new IllegalArgumentException("f must be greater or equal than 1 and less than 100");
         }
@@ -68,6 +73,7 @@ public class BloomFilter {
         // f = (1 - p)^k = e^(kln(1-p))
         // when p = 0.5, k = ln2 * (m/n), f = (1/2)^k = (0.618)^(m/n)
         double errorRate = f / 100.0;
+        // ceil: 返回大于或者等于指定表达式的最小整数
         this.k = (int) Math.ceil(logMN(0.5, errorRate));
 
         if (this.k < 1) {
@@ -87,20 +93,25 @@ public class BloomFilter {
      * Mitzenmacher.
      * </p>
      */
+    // 计算存储位置
     public int[] calcBitPositions(String str) {
         int[] bitPositions = new int[this.k];
 
+        // 哈希计算值
         long hash64 = Hashing.murmur3_128().hashString(str, UTF_8).asLong();
 
         int hash1 = (int) hash64;
         int hash2 = (int) (hash64 >>> 32);
 
         for (int i = 1; i <= this.k; i++) {
+        	// 计算哈希值
             int combinedHash = hash1 + (i * hash2);
             // Flip all the bits if it's negative (guaranteed positive number)
             if (combinedHash < 0) {
+            	// -124 = 123 ; - 453 = 452
                 combinedHash = ~combinedHash;
             }
+            // 设置存储位置
             bitPositions[i - 1] = combinedHash % this.m;
         }
 
@@ -110,6 +121,7 @@ public class BloomFilter {
     /**
      * Calculate bit positions of {@code str} to construct {@code BloomFilterData}
      */
+    // 创建BloomFilterData对象
     public BloomFilterData generate(String str) {
         int[] bitPositions = calcBitPositions(str);
 
@@ -126,6 +138,7 @@ public class BloomFilter {
     /**
      * Set the related {@code bits} positions to 1.
      */
+    // 将相应bit位设置为1
     public void hashTo(int[] bitPositions, BitsArray bits) {
         check(bits);
 
@@ -141,6 +154,7 @@ public class BloomFilter {
      * Then set the related {@code bits} positions to 1.
      * </p>
      */
+    // 将相应bit位设置为1
     public void hashTo(BloomFilterData filterData, BitsArray bits) {
         if (!isValid(filterData)) {
             throw new IllegalArgumentException(
@@ -156,15 +170,17 @@ public class BloomFilter {
      *
      * @return true: all the related {@code bits} positions is 1
      */
+    // 判断指定位置上的索引是否均为1
     public boolean isHit(String str, BitsArray bits) {
         return isHit(calcBitPositions(str), bits);
     }
 
     /**
      * Check all the related {@code bits} positions is 1.
-     *
+     *  
      * @return true: all the related {@code bits} positions is 1
      */
+    // 判断指定位置上的索引是否均为1
     public boolean isHit(int[] bitPositions, BitsArray bits) {
         check(bits);
         boolean ret = bits.getBit(bitPositions[0]);
@@ -194,10 +210,11 @@ public class BloomFilter {
      *
      * @return true: if all positions have been occupied.
      */
+    // 判断指定位置上bit是否为1,并返回 true = 在指定的位置上均为1,即均被占用
     public boolean checkFalseHit(int[] bitPositions, BitsArray bits) {
         for (int j = 0; j < bitPositions.length; j++) {
             int pos = bitPositions[j];
-
+ 
             // check position of bits has been set.
             // that mean no one occupy the position.
             if (!bits.getBit(pos)) {
@@ -208,6 +225,7 @@ public class BloomFilter {
         return true;
     }
 
+    // 检查字节数组是否等于所需要的字节数组长度
     protected void check(BitsArray bits) {
         if (bits.bitLength() != this.m) {
             throw new IllegalArgumentException(
@@ -223,6 +241,7 @@ public class BloomFilter {
      * <li>3. {@link org.apache.rocketmq.filter.util.BloomFilterData#getBitPos} is not null</li>
      * <li>4. {@link org.apache.rocketmq.filter.util.BloomFilterData#getBitPos}'s length is equal to {@code k}</li>
      */
+    // 判断BloomFilterData对象是否有效
     public boolean isValid(BloomFilterData filterData) {
         if (filterData == null
             || filterData.getBitNum() != this.m
@@ -237,6 +256,7 @@ public class BloomFilter {
     /**
      * error rate.
      */
+    // 错误比率
     public int getF() {
         return f;
     }
@@ -251,6 +271,7 @@ public class BloomFilter {
     /**
      * hash function num.
      */
+    // 哈希函数数目
     public int getK() {
         return k;
     }
@@ -258,6 +279,7 @@ public class BloomFilter {
     /**
      * total bit num.
      */
+    // 字节数组长度
     public int getM() {
         return m;
     }
@@ -292,11 +314,12 @@ public class BloomFilter {
         return result;
     }
 
-    @Override
+    @Override // 返回String对象
     public String toString() {
         return String.format("f: %d, n: %d, k: %d, m: %d", f, n, k, m);
     }
 
+    // log(n/m)、对数计算模式
     protected double logMN(double m, double n) {
         return Math.log(n) / Math.log(m);
     }

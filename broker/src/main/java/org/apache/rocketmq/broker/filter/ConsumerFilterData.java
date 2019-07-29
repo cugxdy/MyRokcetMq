@@ -31,20 +31,29 @@ import java.util.Collections;
  */
 public class ConsumerFilterData {
 
+	// 消费组名称
     private String consumerGroup;
+    // Topic名称
     private String topic;
+    
     private String expression;
     private String expressionType;
+    
     private transient Expression compiledExpression;
+    // 创建时间
     private long bornTime;
+    
+    // 死亡时间
     private long deadTime = 0;
     private BloomFilterData bloomFilterData;
+    // 客户端版本
     private long clientVersion;
 
     public boolean isDead() {
         return this.deadTime >= this.bornTime;
     }
 
+    // 距离死亡时间过了多久时间
     public long howLongAfterDeath() {
         if (isDead()) {
             return System.currentTimeMillis() - getDeadTime();
@@ -55,6 +64,7 @@ public class ConsumerFilterData {
     /**
      * Check this filter data has been used to calculate bit map when msg was stored in server.
      */
+    // msg生产时间是否在出生时间之后
     public boolean isMsgInLive(long msgStoreTime) {
         return msgStoreTime > getBornTime();
     }

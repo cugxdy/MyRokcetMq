@@ -223,11 +223,10 @@ public class BrokerController {
     }
 
     public boolean initialize() throws CloneNotSupportedException {
-    	
+    	// 从持久化文件中加载数据到内存中
         boolean result = this.topicConfigManager.load();
 
         result = result && this.consumerOffsetManager.load();
-        
         result = result && this.subscriptionGroupManager.load();
         result = result && this.consumerFilterManager.load();
 

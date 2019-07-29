@@ -59,8 +59,11 @@ public class MixAll {
     //public static final String WS_ADDR = "http://" + WS_DOMAIN_NAME + ":8080/rocketmq/" + WS_DOMAIN_SUBGROUP;
     public static final String DEFAULT_TOPIC = "TBW102";
     public static final String BENCHMARK_TOPIC = "BenchmarkTest";
+    
     public static final String DEFAULT_PRODUCER_GROUP = "DEFAULT_PRODUCER";
     public static final String DEFAULT_CONSUMER_GROUP = "DEFAULT_CONSUMER";
+    
+    // 消息组
     public static final String TOOLS_CONSUMER_GROUP = "TOOLS_CONSUMER";
     public static final String FILTERSRV_CONSUMER_GROUP = "FILTERSRV_CONSUMER";
     public static final String MONITOR_CONSUMER_GROUP = "__MONITOR_CONSUMER";
@@ -70,9 +73,12 @@ public class MixAll {
     public static final String SELF_TEST_TOPIC = "SELF_TEST_TOPIC";
     public static final String OFFSET_MOVED_EVENT = "OFFSET_MOVED_EVENT";
     public static final String ONS_HTTP_PROXY_GROUP = "CID_ONS-HTTP-PROXY";
+    
     public static final String CID_ONSAPI_PERMISSION_GROUP = "CID_ONSAPI_PERMISSION";
     public static final String CID_ONSAPI_OWNER_GROUP = "CID_ONSAPI_OWNER";
     public static final String CID_ONSAPI_PULL_GROUP = "CID_ONSAPI_PULL";
+    
+    // 系统消费组前缀
     public static final String CID_RMQ_SYS_PREFIX = "CID_RMQ_SYS_";
 
     public static final List<String> LOCAL_INET_ADDRESS = getLocalInetAddress();
@@ -106,6 +112,7 @@ public class MixAll {
         return RETRY_GROUP_TOPIC_PREFIX + consumerGroup;
     }
 
+    // 判断是否为系统消费组
     public static boolean isSysConsumerGroup(final String consumerGroup) {
         return consumerGroup.startsWith(CID_RMQ_SYS_PREFIX);
     }

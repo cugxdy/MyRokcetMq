@@ -35,9 +35,11 @@ import org.slf4j.LoggerFactory;
 public class SubscriptionGroupManager extends ConfigManager {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
 
+    // 管理消费组MAP关系
     private final ConcurrentMap<String, SubscriptionGroupConfig> subscriptionGroupTable =
         new ConcurrentHashMap<String, SubscriptionGroupConfig>(1024);
     
+    // 数据版本号
     private final DataVersion dataVersion = new DataVersion();
     private transient BrokerController brokerController;
 
@@ -53,24 +55,28 @@ public class SubscriptionGroupManager extends ConfigManager {
     private void init() {
         {
             SubscriptionGroupConfig subscriptionGroupConfig = new SubscriptionGroupConfig();
+            // 名称为TOOLS_CONSUMER的消费组
             subscriptionGroupConfig.setGroupName(MixAll.TOOLS_CONSUMER_GROUP);
             this.subscriptionGroupTable.put(MixAll.TOOLS_CONSUMER_GROUP, subscriptionGroupConfig);
         }
 
         {
             SubscriptionGroupConfig subscriptionGroupConfig = new SubscriptionGroupConfig();
+            // 名称为FILTERSRV_CONSUMER的消费组
             subscriptionGroupConfig.setGroupName(MixAll.FILTERSRV_CONSUMER_GROUP);
             this.subscriptionGroupTable.put(MixAll.FILTERSRV_CONSUMER_GROUP, subscriptionGroupConfig);
         }
 
         {
             SubscriptionGroupConfig subscriptionGroupConfig = new SubscriptionGroupConfig();
+            // 名称为SELF_TEST_C_GROUP的消费组
             subscriptionGroupConfig.setGroupName(MixAll.SELF_TEST_CONSUMER_GROUP);
             this.subscriptionGroupTable.put(MixAll.SELF_TEST_CONSUMER_GROUP, subscriptionGroupConfig);
         }
 
         {
             SubscriptionGroupConfig subscriptionGroupConfig = new SubscriptionGroupConfig();
+            // 名称为CID_ONS-HTTP-PROXY的消费组
             subscriptionGroupConfig.setGroupName(MixAll.ONS_HTTP_PROXY_GROUP);
             subscriptionGroupConfig.setConsumeBroadcastEnable(true);
             this.subscriptionGroupTable.put(MixAll.ONS_HTTP_PROXY_GROUP, subscriptionGroupConfig);
@@ -78,6 +84,7 @@ public class SubscriptionGroupManager extends ConfigManager {
 
         {
             SubscriptionGroupConfig subscriptionGroupConfig = new SubscriptionGroupConfig();
+            // 名称为CID_ONSAPI_PULL的消费组
             subscriptionGroupConfig.setGroupName(MixAll.CID_ONSAPI_PULL_GROUP);
             subscriptionGroupConfig.setConsumeBroadcastEnable(true);
             this.subscriptionGroupTable.put(MixAll.CID_ONSAPI_PULL_GROUP, subscriptionGroupConfig);
@@ -85,6 +92,7 @@ public class SubscriptionGroupManager extends ConfigManager {
 
         {
             SubscriptionGroupConfig subscriptionGroupConfig = new SubscriptionGroupConfig();
+            // 名称为CID_ONSAPI_PERMISSION的消费组
             subscriptionGroupConfig.setGroupName(MixAll.CID_ONSAPI_PERMISSION_GROUP);
             subscriptionGroupConfig.setConsumeBroadcastEnable(true);
             this.subscriptionGroupTable.put(MixAll.CID_ONSAPI_PERMISSION_GROUP, subscriptionGroupConfig);
@@ -92,17 +100,21 @@ public class SubscriptionGroupManager extends ConfigManager {
 
         {
             SubscriptionGroupConfig subscriptionGroupConfig = new SubscriptionGroupConfig();
+            // 名称为CID_ONSAPI_OWNER的消费组
             subscriptionGroupConfig.setGroupName(MixAll.CID_ONSAPI_OWNER_GROUP);
             subscriptionGroupConfig.setConsumeBroadcastEnable(true);
             this.subscriptionGroupTable.put(MixAll.CID_ONSAPI_OWNER_GROUP, subscriptionGroupConfig);
         }
     }
 
+    // 更新消费订阅组信息
     public void updateSubscriptionGroupConfig(final SubscriptionGroupConfig config) {
         SubscriptionGroupConfig old = this.subscriptionGroupTable.put(config.getGroupName(), config);
         if (old != null) {
+        	// 更新
             log.info("update subscription group config, old: {} new: {}", old, config);
         } else {
+        	// 创建
             log.info("create new subscription group, {}", config);
         }
 
@@ -111,6 +123,7 @@ public class SubscriptionGroupManager extends ConfigManager {
         this.persist();
     }
 
+    // 将消费允许设置为false
     public void disableConsume(final String groupName) {
         SubscriptionGroupConfig old = this.subscriptionGroupTable.get(groupName);
         if (old != null) {
@@ -122,13 +135,16 @@ public class SubscriptionGroupManager extends ConfigManager {
     public SubscriptionGroupConfig findSubscriptionGroupConfig(final String group) {
         SubscriptionGroupConfig subscriptionGroupConfig = this.subscriptionGroupTable.get(group);
         if (null == subscriptionGroupConfig) {
+        	// 判断是否为自动创建或者为系统消费组
             if (brokerController.getBrokerConfig().isAutoCreateSubscriptionGroup() || MixAll.isSysConsumerGroup(group)) {
                 subscriptionGroupConfig = new SubscriptionGroupConfig();
                 subscriptionGroupConfig.setGroupName(group);
+                // 将消费组存入Map中
                 SubscriptionGroupConfig preConfig = this.subscriptionGroupTable.putIfAbsent(group, subscriptionGroupConfig);
                 if (null == preConfig) {
                     log.info("auto create a subscription group, {}", subscriptionGroupConfig.toString());
                 }
+                // 更新数据版本
                 this.dataVersion.nextVersion();
                 this.persist();
             }
@@ -142,7 +158,7 @@ public class SubscriptionGroupManager extends ConfigManager {
         return this.encode(false);
     }
 
-    @Override
+    @Override // 获取配置文件路径
     public String configFilePath() {
         return BrokerPathConfigHelper.getSubscriptionGroupPath(this.brokerController.getMessageStoreConfig()
             .getStorePathRootDir());
@@ -164,6 +180,7 @@ public class SubscriptionGroupManager extends ConfigManager {
         return RemotingSerializable.toJson(this, prettyFormat);
     }
 
+    // 打印配置选项至日志文件中
     private void printLoadDataWhenFirstBoot(final SubscriptionGroupManager sgm) {
         Iterator<Entry<String, SubscriptionGroupConfig>> it = sgm.getSubscriptionGroupTable().entrySet().iterator();
         while (it.hasNext()) {
@@ -172,14 +189,17 @@ public class SubscriptionGroupManager extends ConfigManager {
         }
     }
 
+    // 返回消费组订阅Map信息
     public ConcurrentMap<String, SubscriptionGroupConfig> getSubscriptionGroupTable() {
         return subscriptionGroupTable;
     }
 
+    // 获取数据版本
     public DataVersion getDataVersion() {
         return dataVersion;
     }
 
+    // 删除指定的消费组信息
     public void deleteSubscriptionGroupConfig(final String groupName) {
         SubscriptionGroupConfig old = this.subscriptionGroupTable.remove(groupName);
         if (old != null) {

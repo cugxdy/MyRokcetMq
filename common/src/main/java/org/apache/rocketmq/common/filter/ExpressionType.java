@@ -58,6 +58,7 @@ public class ExpressionType {
      */
     public static final String TAG = "TAG";
 
+    // 判断类型是否为"TAG"类型
     public static boolean isTagType(String type) {
         if (type == null || TAG.equals(type)) {
             return true;

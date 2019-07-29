@@ -173,6 +173,7 @@ public class BitsArray implements Cloneable {
         this.bytes[bytePos] = set;
     }
 
+    // = 0 : true   = 1 : false
     public boolean getBit(int bitPos) {
         checkBitPosition(bitPos, this);
 
@@ -185,10 +186,12 @@ public class BitsArray implements Cloneable {
         return this.bytes[bytePos];
     }
 
+    // 判断索引为分配在那个字节上
     protected int subscript(int bitPos) {
         return bitPos / Byte.SIZE;
     }
 
+    // 判断索引在字节的那个bit位上
     protected int position(int bitPos) {
         return 1 << bitPos % Byte.SIZE;
     }
@@ -204,7 +207,9 @@ public class BitsArray implements Cloneable {
     }
 
     protected void checkBitPosition(int bitPos, BitsArray bitsArray) {
-        checkInitialized(bitsArray);
+        // 检查BitsArray对象
+    	checkInitialized(bitsArray);
+        // 校验输入参数的合法性
         if (bitPos > bitsArray.bitLength()) {
             throw new IllegalArgumentException("BitPos is greater than " + bitLength);
         }
@@ -214,16 +219,20 @@ public class BitsArray implements Cloneable {
     }
 
     protected void checkInitialized(BitsArray bitsArray) {
+    	// 判断字节数组是否为空
         if (bitsArray.bytes() == null) {
             throw new RuntimeException("Not initialized!");
         }
     }
 
+    // 创建新的BitsArray对象
     public BitsArray clone() {
         byte[] clone = new byte[this.byteLength()];
 
+        // 复制字节数组对象
         System.arraycopy(this.bytes, 0, clone, 0, this.byteLength());
 
+        // 创建BitsArray对象
         return create(clone, bitLength());
     }
 
