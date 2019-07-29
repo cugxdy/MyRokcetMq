@@ -18,6 +18,7 @@ package org.apache.rocketmq.store;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+// 引用计数算法
 public abstract class ReferenceResource {
     protected final AtomicLong refCount = new AtomicLong(1);
     protected volatile boolean available = true;
@@ -26,6 +27,7 @@ public abstract class ReferenceResource {
 
     public synchronized boolean hold() {
         if (this.isAvailable()) {
+        	// 引用计数
             if (this.refCount.getAndIncrement() > 0) {
                 return true;
             } else {
@@ -43,7 +45,9 @@ public abstract class ReferenceResource {
     public void shutdown(final long intervalForcibly) {
         if (this.available) {
             this.available = false;
+            // 更新时间戳
             this.firstShutdownTimestamp = System.currentTimeMillis();
+            // 释放引用计数
             this.release();
         } else if (this.getRefCount() > 0) {
             if ((System.currentTimeMillis() - this.firstShutdownTimestamp) >= intervalForcibly) {
@@ -53,6 +57,7 @@ public abstract class ReferenceResource {
         }
     }
 
+    // 释放内存
     public void release() {
         long value = this.refCount.decrementAndGet();
         if (value > 0)
@@ -64,6 +69,7 @@ public abstract class ReferenceResource {
         }
     }
 
+    // 获取引用计数
     public long getRefCount() {
         return this.refCount.get();
     }
