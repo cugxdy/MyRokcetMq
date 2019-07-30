@@ -35,10 +35,13 @@ public class MappedFileQueue {
 
     private static final int DELETE_FILES_BATCH_MAX = 10;
 
+    // 存储路径
     private final String storePath;
 
+    // MappedFile文件尺寸
     private final int mappedFileSize;
 
+    // CopyOnWriteArrayList支持读多写少的并发情况:在增删改上加锁，但是读不加锁，在读方面的性能就好于Vector
     private final CopyOnWriteArrayList<MappedFile> mappedFiles = new CopyOnWriteArrayList<MappedFile>();
 
     private final AllocateMappedFileService allocateMappedFileService;
@@ -46,6 +49,7 @@ public class MappedFileQueue {
     private long flushedWhere = 0;
     private long committedWhere = 0;
 
+    // 存储时间戳
     private volatile long storeTimestamp = 0;
 
     public MappedFileQueue(final String storePath, int mappedFileSize,
@@ -55,8 +59,9 @@ public class MappedFileQueue {
         this.allocateMappedFileService = allocateMappedFileService;
     }
 
+    // 检查MappedFile是否符合指定大小
     public void checkSelf() {
-
+    	// 判断CopyOnWriteArrayList是否为空
         if (!this.mappedFiles.isEmpty()) {
             Iterator<MappedFile> iterator = mappedFiles.iterator();
             MappedFile pre = null;
@@ -64,6 +69,7 @@ public class MappedFileQueue {
                 MappedFile cur = iterator.next();
 
                 if (pre != null) {
+                	// 判断指定大小是否符合尺寸
                     if (cur.getFileFromOffset() - pre.getFileFromOffset() != this.mappedFileSize) {
                         LOG_ERROR.error("[BUG]The mappedFile queue's data is damaged, the adjacent mappedFile's offset don't match. pre file {}, cur file {}",
                             pre.getFileName(), cur.getFileName());
@@ -74,6 +80,7 @@ public class MappedFileQueue {
         }
     }
 
+    // 返回最新更新的MappedFile对象
     public MappedFile getMappedFileByTime(final long timestamp) {
         Object[] mfs = this.copyMappedFiles(0);
 
@@ -82,6 +89,7 @@ public class MappedFileQueue {
 
         for (int i = 0; i < mfs.length; i++) {
             MappedFile mappedFile = (MappedFile) mfs[i];
+            // 返回最近更新的MappedFile对象
             if (mappedFile.getLastModifiedTimestamp() >= timestamp) {
                 return mappedFile;
             }
@@ -90,6 +98,7 @@ public class MappedFileQueue {
         return (MappedFile) mfs[mfs.length - 1];
     }
 
+    // 以Array形式返回MappedFile对象
     private Object[] copyMappedFiles(final int reservedMappedFiles) {
         Object[] mfs;
 
@@ -97,10 +106,12 @@ public class MappedFileQueue {
             return null;
         }
 
+        // 转换Array形式
         mfs = this.mappedFiles.toArray();
         return mfs;
     }
 
+    // 设置MappedFile对象的committedPosition、wrotePosition、flushedPosition属性值
     public void truncateDirtyFiles(long offset) {
         List<MappedFile> willRemoveFiles = new ArrayList<MappedFile>();
 
@@ -121,6 +132,7 @@ public class MappedFileQueue {
         this.deleteExpiredFile(willRemoveFiles);
     }
 
+    // 从CopyOnWriteArrayList中删除shutdown状态下的MappedFile对象
     void deleteExpiredFile(List<MappedFile> files) {
 
         if (!files.isEmpty()) {
@@ -128,6 +140,7 @@ public class MappedFileQueue {
             Iterator<MappedFile> iterator = files.iterator();
             while (iterator.hasNext()) {
                 MappedFile cur = iterator.next();
+                // 从CopyOnWriteArrayList中删除shutdown状态下的MappedFile对象
                 if (!this.mappedFiles.contains(cur)) {
                     iterator.remove();
                     log.info("This mappedFile {} is not contained by mappedFiles, so skip it.", cur.getFileName());
@@ -145,13 +158,16 @@ public class MappedFileQueue {
     }
 
     public boolean load() {
+    	// 目录文件
         File dir = new File(this.storePath);
+        // 获取storePath目录下的文件列表
         File[] files = dir.listFiles();
         if (files != null) {
             // ascending order
             Arrays.sort(files);
             for (File file : files) {
 
+            	// 文件尺寸不等于mappedFileSize对象
                 if (file.length() != this.mappedFileSize) {
                     log.warn(file + "\t" + file.length()
                         + " length not matched message store config value, ignore it");
@@ -159,6 +175,7 @@ public class MappedFileQueue {
                 }
 
                 try {
+                	// 创建MappedFile对象
                     MappedFile mappedFile = new MappedFile(file.getPath(), mappedFileSize);
 
                     mappedFile.setWrotePosition(this.mappedFileSize);
@@ -176,6 +193,7 @@ public class MappedFileQueue {
         return true;
     }
 
+    // 获取尚未提交的数据长度
     public long howMuchFallBehind() {
         if (this.mappedFiles.isEmpty())
             return 0;
@@ -191,29 +209,36 @@ public class MappedFileQueue {
         return 0;
     }
 
+    // 获取MappedFile对象
     public MappedFile getLastMappedFile(final long startOffset, boolean needCreate) {
         long createOffset = -1;
         MappedFile mappedFileLast = getLastMappedFile();
 
+        // CopyOnwriteArrayList集合为空
         if (mappedFileLast == null) {
             createOffset = startOffset - (startOffset % this.mappedFileSize);
         }
 
+        // MappedFile对象已填满
         if (mappedFileLast != null && mappedFileLast.isFull()) {
             createOffset = mappedFileLast.getFileFromOffset() + this.mappedFileSize;
         }
 
         if (createOffset != -1 && needCreate) {
-            String nextFilePath = this.storePath + File.separator + UtilAll.offset2FileName(createOffset);
+            // MappedFile文件路径
+        	String nextFilePath = this.storePath + File.separator + UtilAll.offset2FileName(createOffset);
+            // 下一个MappedFile文件路径
             String nextNextFilePath = this.storePath + File.separator
                 + UtilAll.offset2FileName(createOffset + this.mappedFileSize);
             MappedFile mappedFile = null;
 
+            // 当AllocateMappedFileService对象不为空时
             if (this.allocateMappedFileService != null) {
                 mappedFile = this.allocateMappedFileService.putRequestAndReturnMappedFile(nextFilePath,
                     nextNextFilePath, this.mappedFileSize);
             } else {
                 try {
+                	// 创建MappedFile对象
                     mappedFile = new MappedFile(nextFilePath, this.mappedFileSize);
                 } catch (IOException e) {
                     log.error("create mappedFile exception", e);
@@ -237,11 +262,13 @@ public class MappedFileQueue {
         return getLastMappedFile(startOffset, true);
     }
 
+    // 获取ArrayList最后一个元素
     public MappedFile getLastMappedFile() {
         MappedFile mappedFileLast = null;
 
         while (!this.mappedFiles.isEmpty()) {
             try {
+            	// 获取数组最后一个元素
                 mappedFileLast = this.mappedFiles.get(this.mappedFiles.size() - 1);
                 break;
             } catch (IndexOutOfBoundsException e) {
@@ -255,6 +282,7 @@ public class MappedFileQueue {
         return mappedFileLast;
     }
 
+    // 重置offset
     public boolean resetOffset(long offset) {
         MappedFile mappedFileLast = getLastMappedFile();
 
@@ -270,9 +298,11 @@ public class MappedFileQueue {
 
         ListIterator<MappedFile> iterator = this.mappedFiles.listIterator();
 
+        // 从尾部遍历CopyOnWriteArrayList对象
         while (iterator.hasPrevious()) {
             mappedFileLast = iterator.previous();
             if (offset >= mappedFileLast.getFileFromOffset()) {
+            	// 设置相应偏移量
                 int where = (int) (offset % mappedFileLast.getFileSize());
                 mappedFileLast.setFlushedPosition(where);
                 mappedFileLast.setWrotePosition(where);
@@ -285,6 +315,7 @@ public class MappedFileQueue {
         return true;
     }
 
+    // 获取第一个MappedFile对象文件偏移量
     public long getMinOffset() {
 
         if (!this.mappedFiles.isEmpty()) {
@@ -299,6 +330,7 @@ public class MappedFileQueue {
         return -1;
     }
 
+    // 获取最后MappedFile对象已读写索引
     public long getMaxOffset() {
         MappedFile mappedFile = getLastMappedFile();
         if (mappedFile != null) {
@@ -307,6 +339,7 @@ public class MappedFileQueue {
         return 0;
     }
 
+    // 获取最后MappedFile对象待写索引
     public long getMaxWrotePosition() {
         MappedFile mappedFile = getLastMappedFile();
         if (mappedFile != null) {
@@ -323,6 +356,7 @@ public class MappedFileQueue {
         return getMaxOffset() - flushedWhere;
     }
 
+    // 删除最后一个MappedFile对象
     public void deleteLastMappedFile() {
         MappedFile lastMappedFile = getLastMappedFile();
         if (lastMappedFile != null) {
@@ -333,10 +367,12 @@ public class MappedFileQueue {
         }
     }
 
+    // 删除过期文件
     public int deleteExpiredFileByTime(final long expiredTime,
         final int deleteFilesInterval,
         final long intervalForcibly,
         final boolean cleanImmediately) {
+    	
         Object[] mfs = this.copyMappedFiles(0);
 
         if (null == mfs)
@@ -349,17 +385,20 @@ public class MappedFileQueue {
             for (int i = 0; i < mfsLength; i++) {
                 MappedFile mappedFile = (MappedFile) mfs[i];
                 long liveMaxTimestamp = mappedFile.getLastModifiedTimestamp() + expiredTime;
+                // 判断是否过期时间
                 if (System.currentTimeMillis() >= liveMaxTimestamp || cleanImmediately) {
                     if (mappedFile.destroy(intervalForcibly)) {
                         files.add(mappedFile);
-                        deleteCount++;
+                        deleteCount++; // 删除计数器
 
+                        // 删除批量操作最大操作数
                         if (files.size() >= DELETE_FILES_BATCH_MAX) {
                             break;
                         }
 
                         if (deleteFilesInterval > 0 && (i + 1) < mfsLength) {
                             try {
+                            	// 线程休眠指定时间
                                 Thread.sleep(deleteFilesInterval);
                             } catch (InterruptedException e) {
                             }
@@ -374,11 +413,13 @@ public class MappedFileQueue {
             }
         }
 
+        // 删除过期MappedFile对象
         deleteExpiredFile(files);
 
         return deleteCount;
     }
 
+    // 通过Offset删除过期文件
     public int deleteExpiredFileByOffset(long offset, int unitSize) {
         Object[] mfs = this.copyMappedFiles(0);
 
@@ -459,11 +500,14 @@ public class MappedFileQueue {
      * @param returnFirstOnNotFound If the mapped file is not found, then return the first one.
      * @return Mapped file or null (when not found and returnFirstOnNotFound is <code>false</code>).
      */
+    // 根据offset获取MappedFile对象
     public MappedFile findMappedFileByOffset(final long offset, final boolean returnFirstOnNotFound) {
         try {
             MappedFile mappedFile = this.getFirstMappedFile();
             if (mappedFile != null) {
+            	// 获取offset所在文件索引
                 int index = (int) ((offset / this.mappedFileSize) - (mappedFile.getFileFromOffset() / this.mappedFileSize));
+                // 判断index参数合法性
                 if (index < 0 || index >= this.mappedFiles.size()) {
                     LOG_ERROR.warn("Offset for {} not matched. Request offset: {}, index: {}, " +
                             "mappedFileSize: {}, mappedFiles count: {}",
@@ -475,6 +519,7 @@ public class MappedFileQueue {
                 }
 
                 try {
+                	// 返回指定位置的MappedFile对象
                     return this.mappedFiles.get(index);
                 } catch (Exception e) {
                     if (returnFirstOnNotFound) {
@@ -490,6 +535,7 @@ public class MappedFileQueue {
         return null;
     }
 
+    // 获取第一个MappedFile对象
     public MappedFile getFirstMappedFile() {
         MappedFile mappedFileFirst = null;
 
@@ -510,6 +556,7 @@ public class MappedFileQueue {
         return findMappedFileByOffset(offset, false);
     }
 
+    // 获取文件所占用内存大小
     public long getMappedMemorySize() {
         long size = 0;
 
@@ -525,6 +572,7 @@ public class MappedFileQueue {
         return size;
     }
 
+    // 重试删除第一个MappedFile对象 
     public boolean retryDeleteFirstFile(final long intervalForcibly) {
         MappedFile mappedFile = this.getFirstMappedFile();
         if (mappedFile != null) {
@@ -547,12 +595,14 @@ public class MappedFileQueue {
         return false;
     }
 
+    // shutdown-MappedFile对象
     public void shutdown(final long intervalForcibly) {
         for (MappedFile mf : this.mappedFiles) {
             mf.shutdown(intervalForcibly);
         }
     }
 
+    // 删除MappedFile对象集合并且删除文件目录
     public void destroy() {
         for (MappedFile mf : this.mappedFiles) {
             mf.destroy(1000 * 3);

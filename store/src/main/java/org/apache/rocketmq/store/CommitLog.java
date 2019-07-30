@@ -48,6 +48,7 @@ public class CommitLog {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
     // End of file empty MAGIC CODE cbd43194
     private final static int BLANK_MAGIC_CODE = 0xBBCCDDEE ^ 1880681586 + 8;
+    
     private final MappedFileQueue mappedFileQueue;
     private final DefaultMessageStore defaultMessageStore;
     private final FlushCommitLogService flushCommitLogService;
@@ -1152,7 +1153,8 @@ public class CommitLog {
     }
 
     class DefaultAppendMessageCallback implements AppendMessageCallback {
-        // File at the end of the minimum fixed length empty
+        
+    	// File at the end of the minimum fixed length empty
         private static final int END_FILE_MIN_BLANK_LENGTH = 4 + 4;
         private final ByteBuffer msgIdMemory;
         // Store the message content

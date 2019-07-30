@@ -28,6 +28,8 @@ public class IndexHeader {
     private static int endPhyoffsetIndex = 24;
     private static int hashSlotcountIndex = 32;
     private static int indexCountIndex = 36;
+    
+    
     private final ByteBuffer byteBuffer;
     private AtomicLong beginTimestamp = new AtomicLong(0);
     private AtomicLong endTimestamp = new AtomicLong(0);

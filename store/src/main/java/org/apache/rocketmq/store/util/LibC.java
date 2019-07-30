@@ -34,8 +34,10 @@ public interface LibC extends Library {
 
     /* sync memory asynchronously */
     int MS_ASYNC = 0x0001;
+    
     /* invalidate mappings & caches */
     int MS_INVALIDATE = 0x0002;
+    
     /* synchronous memory sync */
     int MS_SYNC = 0x0004;
 

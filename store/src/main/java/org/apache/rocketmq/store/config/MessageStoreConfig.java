@@ -32,6 +32,7 @@ public class MessageStoreConfig {
         + File.separator + "commitlog";
 
     // CommitLog file size,default is 1G
+    // CommitLog文件大小,默认为1G
     private int mapedFileSizeCommitLog = 1024 * 1024 * 1024;
     
     // ConsumeQueue file size,default is 30W
@@ -61,6 +62,7 @@ public class MessageStoreConfig {
      * introduced since 4.0.x. Determine whether to use mutex reentrantLock when putting message.<br/>
      * By default it is set to false indicating using spin lock when putting message.
      */
+    // 当putMessage使用ReentrantLock锁
     private boolean useReentrantLockWhenPutMessage = false;
 
     // Whether schedule flush,default is real-time

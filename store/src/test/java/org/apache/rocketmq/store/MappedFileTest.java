@@ -37,7 +37,7 @@ public class MappedFileTest {
         MappedFile mappedFile = new MappedFile("target/unit_test_store/MappedFileTest/000", 1024 * 64);
         boolean result = mappedFile.appendMessage(storeMessage.getBytes());
         assertThat(result).isTrue();
-
+  
         SelectMappedBufferResult selectMappedBufferResult = mappedFile.selectMappedBuffer(0);
         byte[] data = new byte[storeMessage.length()];
         selectMappedBufferResult.getByteBuffer().get(data);

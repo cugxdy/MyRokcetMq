@@ -39,6 +39,7 @@ public class IndexFile {
     
     // 内存映射文件(java Nio)
     private final MappedFile mappedFile;
+    
     private final FileChannel fileChannel;
     // ByteBuffer对象
     private final MappedByteBuffer mappedByteBuffer;
