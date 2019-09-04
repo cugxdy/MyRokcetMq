@@ -34,11 +34,15 @@ public class MessageExt extends Message {
     private long bornTimestamp;
     private SocketAddress bornHost;
 
-    // 存储时间戳
+    // 存储开始时间戳
     private long storeTimestamp;
+    
+    // 存储Ip地址
     private SocketAddress storeHost;
     private String msgId;
     private long commitLogOffset;
+    
+    // 检验
     private int bodyCRC;
     private int reconsumeTimes;
 

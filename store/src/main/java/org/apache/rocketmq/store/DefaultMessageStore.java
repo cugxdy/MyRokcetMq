@@ -63,39 +63,56 @@ import static org.apache.rocketmq.store.config.BrokerRole.SLAVE;
 public class DefaultMessageStore implements MessageStore {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
 
+    // 消息存储配置对象
     private final MessageStoreConfig messageStoreConfig;
-    // CommitLog
+    
+    // CommitLog对象
     private final CommitLog commitLog;
 
+    // topic的消费队列
     private final ConcurrentMap<String/* topic */, ConcurrentMap<Integer/* queueId */, ConsumeQueue>> consumeQueueTable;
 
+    // ConsumeQueue刷盘服务线程
     private final FlushConsumeQueueService flushConsumeQueueService;
 
+    // 清理CommitLog队列
     private final CleanCommitLogService cleanCommitLogService;
 
+    // 清理消费队列服务
     private final CleanConsumeQueueService cleanConsumeQueueService;
 
+    // 索引服务
     private final IndexService indexService;
 
+    // MappedFile分配线程，RocketMQ使用内存映射处理commitlog,consumeQueue文件
     private final AllocateMappedFileService allocateMappedFileService;
 
+    // 重试存储消息服务现场
     private final ReputMessageService reputMessageService;
 
+    // 主从同步实现服务
     private final HAService haService;
 
+    // 定时任务调度器，执行定时任务，主要是处理定时任务。
     private final ScheduleMessageService scheduleMessageService;
 
+    // 存储统计服务
     private final StoreStatsService storeStatsService;
 
     private final TransientStorePool transientStorePool;
 
+    // 存储服务状态
     private final RunningFlags runningFlags = new RunningFlags();
     private final SystemClock systemClock = new SystemClock();
 
     private final ScheduledExecutorService scheduledExecutorService =
         Executors.newSingleThreadScheduledExecutor(new ThreadFactoryImpl("StoreScheduledThread"));
+    
+    // Broker统计服务
     private final BrokerStatsManager brokerStatsManager;
+    
     private final MessageArrivingListener messageArrivingListener;
+    
     private final BrokerConfig brokerConfig;
 
     private volatile boolean shutdown = true;
@@ -104,6 +121,7 @@ public class DefaultMessageStore implements MessageStore {
 
     private AtomicLong printTimes = new AtomicLong(0);
 
+    // 转发comitlog日志,主要是从commitlog转发到consumeQueue、commitlog index。
     private final LinkedList<CommitLogDispatcher> dispatcherList;
 
     private RandomAccessFile lockFile;
@@ -148,6 +166,7 @@ public class DefaultMessageStore implements MessageStore {
         this.dispatcherList.addLast(new CommitLogDispatcherBuildIndex());
 
         File file = new File(StorePathConfigHelper.getLockFile(messageStoreConfig.getStorePathRootDir()));
+        // 确保父目录存在
         MappedFile.ensureDirOK(file.getParent());
         lockFile = new RandomAccessFile(file, "rw");
     }
@@ -169,25 +188,33 @@ public class DefaultMessageStore implements MessageStore {
         boolean result = true;
 
         try {
+        	// 判断 ${ROCKET_HOME}/storepath/abort 文件是否存在，如果文件存在，则返回true,否则返回false
+        	// 判断是否为正常shutdown
             boolean lastExitOK = !this.isTempFileExist();
             log.info("last shutdown {}", lastExitOK ? "normally" : "abnormally");
 
             if (null != scheduleMessageService) {
+            	// 延迟消息启动
                 result = result && this.scheduleMessageService.load();
             }
 
             // load Commit Log
+            // commitlog文件加载
             result = result && this.commitLog.load();
 
             // load Consume Queue
+            // 加载consumerqueue文件
             result = result && this.loadConsumeQueue();
 
             if (result) {
+            	// 文件存储检测点
                 this.storeCheckpoint =
                     new StoreCheckpoint(StorePathConfigHelper.getStoreCheckpoint(this.messageStoreConfig.getStorePathRootDir()));
 
+                // 索引文件加载
                 this.indexService.load(lastExitOK);
 
+                // 文件检测恢复
                 this.recover(lastExitOK);
 
                 log.info("load over, and the max phy offset = {}", this.getMaxPhyOffset());
@@ -303,11 +330,13 @@ public class DefaultMessageStore implements MessageStore {
     }
 
     public PutMessageResult putMessage(MessageExtBrokerInner msg) {
-        if (this.shutdown) {
+        // 判断是否处于shutdown状态下
+    	if (this.shutdown) {
             log.warn("message store has shutdown, so putMessage is forbidden");
             return new PutMessageResult(PutMessageStatus.SERVICE_NOT_AVAILABLE, null);
         }
 
+    	// 如果为从服务器,禁止写操作
         if (BrokerRole.SLAVE == this.messageStoreConfig.getBrokerRole()) {
             long value = this.printTimes.getAndIncrement();
             if ((value % 50000) == 0) {
@@ -317,6 +346,7 @@ public class DefaultMessageStore implements MessageStore {
             return new PutMessageResult(PutMessageStatus.SERVICE_NOT_AVAILABLE, null);
         }
 
+        // 判断当前运行状态是否具有写能力
         if (!this.runningFlags.isWriteable()) {
             long value = this.printTimes.getAndIncrement();
             if ((value % 50000) == 0) {
@@ -328,6 +358,7 @@ public class DefaultMessageStore implements MessageStore {
             this.printTimes.set(0);
         }
 
+        // Topic大于127时
         if (msg.getTopic().length() > Byte.MAX_VALUE) {
             log.warn("putMessage message topic length too long " + msg.getTopic().length());
             return new PutMessageResult(PutMessageStatus.MESSAGE_ILLEGAL, null);
@@ -338,19 +369,25 @@ public class DefaultMessageStore implements MessageStore {
             return new PutMessageResult(PutMessageStatus.PROPERTIES_SIZE_EXCEEDED, null);
         }
 
+        // 检测操作系统页写入是否忙
         if (this.isOSPageCacheBusy()) {
             return new PutMessageResult(PutMessageStatus.OS_PAGECACHE_BUSY, null);
         }
 
+        // 获取当前时间
         long beginTime = this.getSystemClock().now();
+        // 将日志写入CommitLog文件，具体实现类CommitLog
         PutMessageResult result = this.commitLog.putMessage(msg);
 
         long eclipseTime = this.getSystemClock().now() - beginTime;
         if (eclipseTime > 500) {
             log.warn("putMessage not in lock eclipse time(ms)={}, bodyLength={}", eclipseTime, msg.getBody().length);
         }
+        
+        // 记录相关统计信息
         this.storeStatsService.setPutMessageEntireTimeMax(eclipseTime);
 
+        // 记录写commitlog失败次数
         if (null == result || !result.isOk()) {
             this.storeStatsService.getPutMessageFailedTimes().incrementAndGet();
         }
@@ -1276,14 +1313,16 @@ public class DefaultMessageStore implements MessageStore {
     }
 
     private void recover(final boolean lastExitOK) {
-        this.recoverConsumeQueue();
+        this.recoverConsumeQueue(); // 恢复消息队列
 
+        // 如果是正常退出，则按照正常修复；如果是异常退出，则走异常修复逻辑
         if (lastExitOK) {
             this.commitLog.recoverNormally();
         } else {
             this.commitLog.recoverAbnormally();
         }
 
+        // 修复主题队列
         this.recoverTopicQueueTable();
     }
 

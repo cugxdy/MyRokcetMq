@@ -18,7 +18,9 @@ package org.apache.rocketmq.store.index;
 
 import java.util.List;
 
+// 查询消息在CommitLog文件中的物理偏移量集合对象
 public class QueryOffsetResult {
+	// 消息在CommitLog文件中的物理偏移量集合对象
     private final List<Long> phyOffsets;
     private final long indexLastUpdateTimestamp;
     private final long indexLastUpdatePhyoffset;
@@ -34,10 +36,12 @@ public class QueryOffsetResult {
         return phyOffsets;
     }
 
+    // 当前最后一个IndexFile中的最大存储时间戳
     public long getIndexLastUpdateTimestamp() {
         return indexLastUpdateTimestamp;
     }
 
+    // 当前最后一个IndexFile中的最大物理偏移量
     public long getIndexLastUpdatePhyoffset() {
         return indexLastUpdatePhyoffset;
     }

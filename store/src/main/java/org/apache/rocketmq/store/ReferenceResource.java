@@ -25,6 +25,7 @@ public abstract class ReferenceResource {
     protected volatile boolean cleanupOver = false;
     private volatile long firstShutdownTimestamp = 0;
 
+    // 判断引用计数算法()
     public synchronized boolean hold() {
         if (this.isAvailable()) {
         	// 引用计数

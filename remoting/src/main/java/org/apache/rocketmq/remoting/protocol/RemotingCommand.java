@@ -36,6 +36,7 @@ public class RemotingCommand {
     public static final String SERIALIZE_TYPE_ENV = "ROCKETMQ_SERIALIZE_TYPE";
     public static final String REMOTING_VERSION_KEY = "rocketmq.remoting.version";
     private static final Logger log = LoggerFactory.getLogger(RemotingHelper.ROCKETMQ_REMOTING);
+    
     // 请求类型
     private static final int RPC_TYPE = 0; // 0, REQUEST_COMMAND
     private static final int RPC_ONEWAY = 1; // 0, RPC 指单向RPC,比如心跳包
@@ -54,6 +55,7 @@ public class RemotingCommand {
     private static final String DOUBLE_CANONICAL_NAME_2 = double.class.getCanonicalName();
     private static final String INTEGER_CANONICAL_NAME_1 = Integer.class.getCanonicalName();
     private static final String INTEGER_CANONICAL_NAME_2 = int.class.getCanonicalName();
+    
     // getCanonicalName():获取所传类从java语言规范定义的格式输出。
     private static final String LONG_CANONICAL_NAME_1 = Long.class.getCanonicalName();
     private static final String LONG_CANONICAL_NAME_2 = long.class.getCanonicalName();

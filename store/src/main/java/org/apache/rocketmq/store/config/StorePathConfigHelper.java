@@ -18,6 +18,7 @@ package org.apache.rocketmq.store.config;
 
 import java.io.File;
 
+// 存储路径配置项
 public class StorePathConfigHelper {
 
     public static String getStorePathConsumeQueue(final String rootDir) {
@@ -40,6 +41,7 @@ public class StorePathConfigHelper {
         return rootDir + File.separator + "abort";
     }
 
+    // 获取文件名称
     public static String getLockFile(final String rootDir) {
         return rootDir + File.separator + "lock";
     }

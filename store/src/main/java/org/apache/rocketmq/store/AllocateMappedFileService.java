@@ -35,12 +35,15 @@ import org.slf4j.LoggerFactory;
  * Create MappedFile in advance
  */
 public class AllocateMappedFileService extends ServiceThread {
+	
     private static final Logger log = LoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
     private static int waitTimeOut = 1000 * 5;
     private ConcurrentMap<String, AllocateRequest> requestTable =
         new ConcurrentHashMap<String, AllocateRequest>();
+    
     private PriorityBlockingQueue<AllocateRequest> requestQueue =
         new PriorityBlockingQueue<AllocateRequest>();
+    
     private volatile boolean hasException = false;
     private DefaultMessageStore messageStore;
 

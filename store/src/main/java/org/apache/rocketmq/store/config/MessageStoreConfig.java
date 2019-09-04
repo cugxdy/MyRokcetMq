@@ -22,6 +22,7 @@ import org.apache.rocketmq.store.ConsumeQueue;
 
 // 持久化配置选项
 public class MessageStoreConfig {
+	
     //The root directory in which the log data is kept
     @ImportantField     // TopicConfigManager配置文件路径
     private String storePathRootDir = System.getProperty("user.home") + File.separator + "store";
@@ -133,7 +134,10 @@ public class MessageStoreConfig {
     @ImportantField
     private boolean messageIndexEnable = true;
     
+    // Index文件中哈希槽最大数量
     private int maxHashSlotNum = 5000000;
+    
+    // Index文件中Index条目最大数量
     private int maxIndexNum = 5000000 * 4;
     private int maxMsgsNumBatch = 64;
     
@@ -153,12 +157,13 @@ public class MessageStoreConfig {
     @ImportantField // 刷新磁盘类型(同步/异步)
     private FlushDiskType flushDiskType = FlushDiskType.ASYNC_FLUSH;
     
-    // 同步刷新超时时间
+    // 同步刷新超时时间(5s)
     private int syncFlushTimeout = 1000 * 5;
     
     // 消息延迟级别
     private String messageDelayLevel = "1s 5s 10s 30s 1m 2m 3m 4m 5m 6m 7m 8m 9m 10m 20m 30m 1h 2h";
     private long flushDelayOffsetInterval = 1000 * 10;
+    
     @ImportantField
     private boolean cleanFileForciblyEnable = true;
     private boolean warmMapedFileEnable = false;
@@ -169,11 +174,14 @@ public class MessageStoreConfig {
     private long osPageCacheBusyTimeOutMills = 1000;
     private int defaultQueryMaxNum = 32;
 
-    @ImportantField
+    @ImportantField // 是否开启堆外内存
     private boolean transientStorePoolEnable = false;
     private int transientStorePoolSize = 5;
     private boolean fastFailIfNoBufferInStorePool = false;
 
+    
+    
+    
     public boolean isDebugLockEnable() {
         return debugLockEnable;
     }

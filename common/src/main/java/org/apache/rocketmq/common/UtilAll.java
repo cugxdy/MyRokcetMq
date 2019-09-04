@@ -72,6 +72,7 @@ public class UtilAll {
         return sb.toString();
     }
 
+    // 将Number对象进行格式化
     public static String offset2FileName(final long offset) {
         final NumberFormat nf = NumberFormat.getInstance();
         nf.setMinimumIntegerDigits(20);

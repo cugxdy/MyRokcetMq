@@ -22,16 +22,28 @@ package org.apache.rocketmq.store;
 public class AppendMessageResult {
     // Return code
     private AppendMessageStatus status;
+    
     // Where to start writing
+    // 消息的偏移量(相对于整个commitlog)
     private long wroteOffset;
+    
     // Write Bytes
+    // 消息待写入字节
     private int wroteBytes;
+    
     // Message ID
+    // 消息ID
     private String msgId;
+    
     // Message storage timestamp
+    // 消息写入时机戳
     private long storeTimestamp;
+    
     // Consume queue's offset(step by one)
+    // 消息队列偏移量
     private long logicsOffset;
+    
+    // 消息写入时机戳（消息存储时间戳--- 消息存储开始时间戳）
     private long pagecacheRT = 0;
 
     private int msgNum = 1;
@@ -43,12 +55,12 @@ public class AppendMessageResult {
     public AppendMessageResult(AppendMessageStatus status, long wroteOffset, int wroteBytes, String msgId,
         long storeTimestamp, long logicsOffset, long pagecacheRT) {
         this.status = status;
-        this.wroteOffset = wroteOffset;
-        this.wroteBytes = wroteBytes;
-        this.msgId = msgId;
-        this.storeTimestamp = storeTimestamp;
-        this.logicsOffset = logicsOffset;
-        this.pagecacheRT = pagecacheRT;
+        this.wroteOffset = wroteOffset; // 消息的偏移量（相对于整个commitlog）
+        this.wroteBytes = wroteBytes; // 消息待写入字节
+        this.msgId = msgId; // 消息ID
+        this.storeTimestamp = storeTimestamp; // 消息写入时机戳
+        this.logicsOffset = logicsOffset; // 消息队列偏移量
+        this.pagecacheRT = pagecacheRT; // 消息写入时机戳（消息存储时间戳--- 消息存储开始时间戳）
     }
 
     public long getPagecacheRT() {

@@ -82,7 +82,8 @@ import org.apache.rocketmq.remoting.exception.RemotingTimeoutException;
 import org.slf4j.Logger;
 
 public class DefaultMQProducerImpl implements MQProducerInner {
-    private final Logger log = ClientLogger.getLog();
+    
+	private final Logger log = ClientLogger.getLog();
     private final Random random = new Random();
     private final DefaultMQProducer defaultMQProducer;
     private final ConcurrentMap<String/* topic */, TopicPublishInfo> topicPublishInfoTable =

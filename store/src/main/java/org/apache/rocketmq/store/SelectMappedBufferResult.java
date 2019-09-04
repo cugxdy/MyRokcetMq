@@ -20,12 +20,15 @@ import java.nio.ByteBuffer;
 
 public class SelectMappedBufferResult {
 
-    private final long startOffset; // 距离整个MappedFile对象起始位置的偏移量
+	// 距离整个MappedFile对象起始位置的偏移量
+    private final long startOffset; 
 
-    private final ByteBuffer byteBuffer; // 
+    // 从MappedFile中从pos位置读取长度为size的ByteBuffer对象
+    private final ByteBuffer byteBuffer; 
 
     private int size;  // 读取size大小bytebuffer对象
 
+    // byteBuffer从这个MappedFile中读取ByteBuffer对象
     private MappedFile mappedFile;
 
     public SelectMappedBufferResult(long startOffset, ByteBuffer byteBuffer, int size, MappedFile mappedFile) {
