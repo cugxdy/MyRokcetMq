@@ -19,7 +19,9 @@ package org.apache.rocketmq.remoting.common;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+// 它是对令牌锁的释放类
 public class SemaphoreReleaseOnlyOnce {
+	// CAS实现
     private final AtomicBoolean released = new AtomicBoolean(false);
     private final Semaphore semaphore;
 
@@ -27,6 +29,7 @@ public class SemaphoreReleaseOnlyOnce {
         this.semaphore = semaphore;
     }
 
+    // 释放令牌锁,用于异步发送及Oneway发送时
     public void release() {
         if (this.semaphore != null) {
             if (this.released.compareAndSet(false, true)) {
