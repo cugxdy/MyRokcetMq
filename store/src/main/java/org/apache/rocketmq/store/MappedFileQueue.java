@@ -117,6 +117,8 @@ public class MappedFileQueue {
     }
 
     // 设置MappedFile对象的committedPosition、wrotePosition、flushedPosition属性值
+    // 1.设置offset所在的MappedFile对象wfc指针
+    // 2.将offset之后的MappedFile文件进行删除
     public void truncateDirtyFiles(long offset) {
         List<MappedFile> willRemoveFiles = new ArrayList<MappedFile>();
 
@@ -330,6 +332,7 @@ public class MappedFileQueue {
                 mappedFileLast.setCommittedPosition(where);
                 break;
             } else {
+            	// 对于大于offset的MappedFile进行删除
                 iterator.remove();
             }
         }
@@ -390,7 +393,8 @@ public class MappedFileQueue {
         }
     }
 
-    // 删除过期文件
+    // 对在指定expiredTime时间内未进行读写的mappedFile对象进行删除
+    // cleanImmediately = true: 表明磁盘空满溢,需立即删除(最近最少使用算法: 淘汰策略)
     public int deleteExpiredFileByTime(final long expiredTime,
         final int deleteFilesInterval,
         final long intervalForcibly,
@@ -408,9 +412,11 @@ public class MappedFileQueue {
             for (int i = 0; i < mfsLength; i++) {
                 MappedFile mappedFile = (MappedFile) mfs[i];
                 long liveMaxTimestamp = mappedFile.getLastModifiedTimestamp() + expiredTime;
-                // 判断是否过期时间
+                // 对mappedFile对象最近未使用时,且空白时间 > liveMaxTimestamp: 将删除mappedFile对象
                 if (System.currentTimeMillis() >= liveMaxTimestamp || cleanImmediately) {
-                    if (mappedFile.destroy(intervalForcibly)) {
+                    
+                	// 对mappedFile对象进行删除行为
+                	if (mappedFile.destroy(intervalForcibly)) {
                         files.add(mappedFile);
                         deleteCount++; // 删除计数器
 
@@ -419,6 +425,7 @@ public class MappedFileQueue {
                             break;
                         }
 
+                        // (i + 1) < mfsLength : 判断是否为最后一个mappedFile对象
                         if (deleteFilesInterval > 0 && (i + 1) < mfsLength) {
                             try {
                             	// 线程休眠指定时间
@@ -442,7 +449,7 @@ public class MappedFileQueue {
         return deleteCount;
     }
 
-    // 通过Offset删除过期文件
+    // 在defaultMessageStore中定时对consumeQueue队列数据进行清除
     public int deleteExpiredFileByOffset(long offset, int unitSize) {
         Object[] mfs = this.copyMappedFiles(0);
 
@@ -455,23 +462,30 @@ public class MappedFileQueue {
             for (int i = 0; i < mfsLength; i++) {
                 boolean destroy;
                 MappedFile mappedFile = (MappedFile) mfs[i];
+                // 获取MappedFile对象最后20字节的数据
                 SelectMappedBufferResult result = mappedFile.selectMappedBuffer(this.mappedFileSize - unitSize);
                 if (result != null) {
+                	// 当该mappedFile对象的最大物理逻辑偏移量 < commitLog中的最小物理偏移量: 需进行删除
                     long maxOffsetInLogicQueue = result.getByteBuffer().getLong();
                     result.release();
+                    
+                    // 当小于commitLog中最小物理偏移量
                     destroy = maxOffsetInLogicQueue < offset;
                     if (destroy) {
                         log.info("physic min offset " + offset + ", logics in current mappedFile max offset "
                             + maxOffsetInLogicQueue + ", delete it");
                     }
                 } else if (!mappedFile.isAvailable()) { // Handle hanged file.
-                    log.warn("Found a hanged consume queue file, attempting to delete it.");
+                    // 该mappedFile对象不可用,进行删除
+                	log.warn("Found a hanged consume queue file, attempting to delete it.");
                     destroy = true;
                 } else {
+                	// 还未写入数据
                     log.warn("this being not executed forever.");
                     break;
                 }
 
+                // 判断是否需要删除mappedFile文件对象
                 if (destroy && mappedFile.destroy(1000 * 60)) {
                     files.add(mappedFile);
                     deleteCount++;
@@ -482,20 +496,24 @@ public class MappedFileQueue {
         }
 
         deleteExpiredFile(files);
-
         return deleteCount;
     }
 
+    // 将this.flushedWhere所处的mappedFile进行刷新操作
     public boolean flush(final int flushLeastPages) {
         boolean result = true;
+        // 获取this.flushedWhere所处的mappedFile对象
         MappedFile mappedFile = this.findMappedFileByOffset(this.flushedWhere, this.flushedWhere == 0);
         if (mappedFile != null) {
             long tmpTimeStamp = mappedFile.getStoreTimestamp();
             int offset = mappedFile.flush(flushLeastPages);
+            // 获取当前已flush索引
             long where = mappedFile.getFileFromOffset() + offset;
+            // 当result = true, 表示未flush数据
             result = where == this.flushedWhere;
             this.flushedWhere = where;
             if (0 == flushLeastPages) {
+            	// 设置storeTimestamp时间戳
                 this.storeTimestamp = tmpTimeStamp;
             }
         }
@@ -503,12 +521,16 @@ public class MappedFileQueue {
         return result;
     }
 
+    // 向fileChannel中提交数据
     public boolean commit(final int commitLeastPages) {
         boolean result = true;
+        // 获取this.committedWhere所处的mappedFile对象
         MappedFile mappedFile = this.findMappedFileByOffset(this.committedWhere, this.committedWhere == 0);
         if (mappedFile != null) {
+        	// 获取mappedFile已提交索引
             int offset = mappedFile.commit(commitLeastPages);
             long where = mappedFile.getFileFromOffset() + offset;
+            // 当result = true, 表示未commit数据
             result = where == this.committedWhere;
             this.committedWhere = where;
         }
@@ -523,7 +545,7 @@ public class MappedFileQueue {
      * @param returnFirstOnNotFound If the mapped file is not found, then return the first one.
      * @return Mapped file or null (when not found and returnFirstOnNotFound is <code>false</code>).
      */
-    // 根据offset获取MappedFile对象
+    // 根据offset获取MappedFile对象(获取offset索引所在的MappedFile文件对象)
     public MappedFile findMappedFileByOffset(final long offset, final boolean returnFirstOnNotFound) {
         try {
             MappedFile mappedFile = this.getFirstMappedFile();
