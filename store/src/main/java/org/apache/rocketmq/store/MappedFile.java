@@ -268,7 +268,7 @@ public class MappedFile extends ReferenceResource {
         return appendMessagesInner(messageExtBatch, cb);
     }
 
-    // 向MappedFile中写入数据
+    // 向MappedFile中写入数据(实际工作是在DefaultAppendMessageCallback中完成的)
     public AppendMessageResult appendMessagesInner(final MessageExt messageExt, final AppendMessageCallback cb) {
         assert messageExt != null;
         assert cb != null;
