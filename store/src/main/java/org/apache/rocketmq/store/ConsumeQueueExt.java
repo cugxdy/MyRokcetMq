@@ -95,6 +95,7 @@ public class ConsumeQueueExt {
      * Just test {@code address} is less than 0.
      * </p>
      */
+    // 判断是否小于Integer类型最小值(-2147483648)
     public static boolean isExtAddr(final long address) {
         return address <= MAX_ADDR;
     }
@@ -149,12 +150,14 @@ public class ConsumeQueueExt {
      * @param address less than 0
      */
     public boolean get(final long address, final CqExtUnit cqExtUnit) {
-        if (!isExtAddr(address)) {
+        // address <= -2147483649 : true
+    	if (!isExtAddr(address)) {
             return false;
         }
 
         final int mappedFileSize = this.mappedFileSize;
-        final long realOffset = unDecorate(address);
+        // 0 < realOffset < 2147483647;
+        final long realOffset = unDecorate(address); 
 
         MappedFile mappedFile = this.mappedFileQueue.findMappedFileByOffset(realOffset, realOffset == 0);
         if (mappedFile == null) {
@@ -170,6 +173,7 @@ public class ConsumeQueueExt {
         }
         boolean ret = false;
         try {
+        	// 创建CqExtUnit对象
             ret = cqExtUnit.read(bufferResult.getByteBuffer());
         } finally {
             bufferResult.release();
@@ -408,6 +412,7 @@ public class ConsumeQueueExt {
      * Store unit.
      */
     public static class CqExtUnit {
+    	
         public static final short MIN_EXT_UNIT_SIZE
             = 2 * 1 // size, 32k max
             + 8 * 2 // msg time + tagCode
@@ -418,6 +423,7 @@ public class ConsumeQueueExt {
         public CqExtUnit() {
         }
 
+        // 创建CqExtUnit对象
         public CqExtUnit(Long tagsCode, long msgStoreTime, byte[] filterBitMap) {
             this.tagsCode = tagsCode == null ? 0 : tagsCode;
             this.msgStoreTime = msgStoreTime;
@@ -451,6 +457,7 @@ public class ConsumeQueueExt {
          * build unit from buffer from current position.
          */
         private boolean read(final ByteBuffer buffer) {
+        	// 已到达ByteBuffer末尾
             if (buffer.position() + 2 > buffer.limit()) {
                 return false;
             }
@@ -461,8 +468,11 @@ public class ConsumeQueueExt {
                 return false;
             }
 
+            // 设置tagsCode、msgStoreTime属性值
             this.tagsCode = buffer.getLong();
             this.msgStoreTime = buffer.getLong();
+            
+            // 获取BitMap数组容量
             this.bitMapSize = buffer.getShort();
 
             if (this.bitMapSize < 1) {
@@ -473,6 +483,7 @@ public class ConsumeQueueExt {
                 this.filterBitMap = new byte[bitMapSize];
             }
 
+            // 获取filterBitMap对象
             buffer.get(this.filterBitMap);
             return true;
         }
@@ -531,27 +542,33 @@ public class ConsumeQueueExt {
         /**
          * Calculate unit size by current data.
          */
+        // 计算该CqExtUnit所占用大小
         private int calcUnitSize() {
             int sizeTemp = MIN_EXT_UNIT_SIZE + (filterBitMap == null ? 0 : filterBitMap.length);
             return sizeTemp;
         }
 
+        // 获取tagsCode
         public long getTagsCode() {
             return tagsCode;
         }
 
+        // 设置tagsCode
         public void setTagsCode(final long tagsCode) {
             this.tagsCode = tagsCode;
         }
 
+        // 获取消息存储时间
         public long getMsgStoreTime() {
             return msgStoreTime;
         }
 
+        // 设置消息存储时间
         public void setMsgStoreTime(final long msgStoreTime) {
             this.msgStoreTime = msgStoreTime;
         }
 
+        // 获取filterBitMap字节数组
         public byte[] getFilterBitMap() {
             if (this.bitMapSize < 1) {
                 return null;
@@ -559,6 +576,7 @@ public class ConsumeQueueExt {
             return filterBitMap;
         }
 
+        // 设置filterBitMap字节数组
         public void setFilterBitMap(final byte[] filterBitMap) {
             this.filterBitMap = filterBitMap;
             // not safe transform, but size will be calculate by #calcUnitSize
