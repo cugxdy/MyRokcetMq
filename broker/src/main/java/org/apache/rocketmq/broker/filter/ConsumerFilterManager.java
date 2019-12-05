@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Consumer filter data manager.Just manage the consumers use expression filter.
  */
+// 它是处理expression过滤器
 public class ConsumerFilterManager extends ConfigManager {
 
     private static final Logger log = LoggerFactory.getLogger(LoggerName.FILTER_LOGGER_NAME);
@@ -48,27 +49,30 @@ public class ConsumerFilterManager extends ConfigManager {
     private static final long MS_24_HOUR = 24 * 3600 * 1000;
 
     // Topic与FilterDataMapByTopic之间的一对一关系
-    private ConcurrentMap<String/*Topic*/, FilterDataMapByTopic>
-        filterDataByTopic = new ConcurrentHashMap<String/*consumer group*/, FilterDataMapByTopic>(256);
+    private ConcurrentMap<String/*topic*/, FilterDataMapByTopic>
+        filterDataByTopic = new ConcurrentHashMap<String/*topic*/, FilterDataMapByTopic>(256);
 
     private transient BrokerController brokerController;
+    
     // 布隆过滤器
     private transient BloomFilter bloomFilter;
 
     public ConsumerFilterManager() {
-        // just for test
+        // just for test // 创建布隆过滤器
         this.bloomFilter = BloomFilter.createByFn(20, 64);
     }
 
     public ConsumerFilterManager(BrokerController brokerController) {
         this.brokerController = brokerController;
         
+        // default = 20 、 32
         this.bloomFilter = BloomFilter.createByFn(
             brokerController.getBrokerConfig().getMaxErrorRateOfBloomFilter(),
             brokerController.getBrokerConfig().getExpectConsumerNumUseFilter()
         );
         
         // then set bit map length of store config.
+        // 设置StoreMessageConfig  bitMapLength = boolfilter.m
         brokerController.getMessageStoreConfig().setBitMapLengthConsumeQueueExt(
             this.bloomFilter.getM()
         );
@@ -84,7 +88,7 @@ public class ConsumerFilterManager extends ConfigManager {
         final String expression, final String type,
         final long clientVersion) {
     	
-    	// 判断是否为"TAG"类型
+    	// true : TAG | null
         if (ExpressionType.isTagType(type)) {
             return null;
         }
@@ -99,15 +103,17 @@ public class ConsumerFilterManager extends ConfigManager {
         
         consumerFilterData.setExpression(expression);
         consumerFilterData.setExpressionType(type);
+        
         // 设置客户端版本号
         consumerFilterData.setClientVersion(clientVersion);
         
         try {
         	
-        	// 编译表达式
+        	// 使用javaCC 词法编译器去遍历表达式
             consumerFilterData.setCompiledExpression(
                 FilterFactory.INSTANCE.get(type).compile(expression)
             );
+            
         } catch (Throwable e) {
             log.error("parse error: expr={}, topic={}, group={}, error={}", expression, topic, consumerGroup, e.getMessage());
             return null;
@@ -116,8 +122,9 @@ public class ConsumerFilterManager extends ConfigManager {
         return consumerFilterData;
     }
 
+    // 注册FilterDataMapByTopic中map对象存入<group,ConsumerFilterData>key - value键值对数据
     public void register(final String consumerGroup, final Collection<SubscriptionData> subList) {
-        for (SubscriptionData subscriptionData : subList) {
+    	for (SubscriptionData subscriptionData : subList) {
             register(
                 subscriptionData.getTopic(),
                 consumerGroup,
@@ -131,6 +138,7 @@ public class ConsumerFilterManager extends ConfigManager {
         Collection<ConsumerFilterData> groupFilterData = getByGroup(consumerGroup);
 
         Iterator<ConsumerFilterData> iterator = groupFilterData.iterator();
+        // 将不存在与Collection<SubscriptionData>下的topic所对应ConsumerFilterData设置为死亡状态
         while (iterator.hasNext()) {
             ConsumerFilterData filterData = iterator.next();
 
@@ -142,6 +150,7 @@ public class ConsumerFilterManager extends ConfigManager {
                 }
             }
 
+            // 当不存在时,就设置为死亡状态
             if (!exist && !filterData.isDead()) {
                 filterData.setDeadTime(System.currentTimeMillis());
                 log.info("Consumer filter changed: {}, make illegal topic dead:{}", consumerGroup, filterData);
@@ -149,9 +158,11 @@ public class ConsumerFilterManager extends ConfigManager {
         }
     }
 
-    // 注册FilterDataMapByTopic对象
+    // 注册FilterDataMapByTopic中map对象存入<group,ConsumerFilterData>key - value键值对数据
     public boolean register(final String topic, final String consumerGroup, final String expression,
         final String type, final long clientVersion) {
+    	
+    	// true : null | "TAG"
         if (ExpressionType.isTagType(type)) {
             return false;
         }
@@ -168,13 +179,14 @@ public class ConsumerFilterManager extends ConfigManager {
             filterDataMapByTopic = prev != null ? prev : temp;
         }
 
-        // 创建BloomFilterData对象
+        // 创建BloomFilterData对象(group@topic)
         BloomFilterData bloomFilterData = bloomFilter.generate(consumerGroup + "#" + topic);
 
+        // 向topic下的FilterDataMapByTopic对象中注册ConsumeerFilterData对象
         return filterDataMapByTopic.register(consumerGroup, expression, type, bloomFilterData, clientVersion);
     }
 
-    // 注销消费组对象
+    // 注销所有topic下的consumerGroup消费组对象
     public void unRegister(final String consumerGroup) {
         for (String topic : filterDataByTopic.keySet()) {
             this.filterDataByTopic.get(topic).unRegister(consumerGroup);
@@ -193,11 +205,12 @@ public class ConsumerFilterManager extends ConfigManager {
         return this.filterDataByTopic.get(topic).getGroupFilterData().get(consumerGroup);
     }
 
-    // 获取指定消费组下ConsumerFilterData对象集合
+    // 获取指定消费组consumerGroup下的所有ConsumerFilterData对象集合
     public Collection<ConsumerFilterData> getByGroup(final String consumerGroup) {
         Collection<ConsumerFilterData> ret = new HashSet<ConsumerFilterData>();
 
         Iterator<FilterDataMapByTopic> topicIterator = this.filterDataByTopic.values().iterator();
+        
         while (topicIterator.hasNext()) {
             FilterDataMapByTopic filterDataMapByTopic = topicIterator.next();
 
@@ -205,21 +218,23 @@ public class ConsumerFilterManager extends ConfigManager {
 
             while (filterDataIterator.hasNext()) {
                 ConsumerFilterData filterData = filterDataIterator.next();
-
+                // 当ConsumerFilterData中group相等时,添加进HashSet集合对象中
                 if (filterData.getConsumerGroup().equals(consumerGroup)) {
                     ret.add(filterData);
                 }
             }
+
         }
 
         return ret;
     }
 
-    // 获取ConsumerFilterData对象集合
+    // 获取指定topic下的所有group下的ConsumerFilterData对象集合
     public final Collection<ConsumerFilterData> get(final String topic) {
         if (!this.filterDataByTopic.containsKey(topic)) {
             return null;
         }
+        
         if (this.filterDataByTopic.get(topic).getGroupFilterData().isEmpty()) {
             return null;
         }
@@ -237,7 +252,7 @@ public class ConsumerFilterManager extends ConfigManager {
         return encode(false);
     }
 
-    @Override// 获取存储路径
+    @Override// 获取存储路径(config/consumerFilter.json)
     public String configFilePath() {
         if (this.brokerController != null) {
             return BrokerPathConfigHelper.getConsumerFilterPath(
@@ -250,9 +265,10 @@ public class ConsumerFilterManager extends ConfigManager {
     @Override// 对字符串进行解码成ConsumerFilterManager对象
     public void decode(final String jsonString) {
         ConsumerFilterManager load = RemotingSerializable.fromJson(jsonString, ConsumerFilterManager.class);
+        
         if (load != null && load.filterDataByTopic != null) {
             boolean bloomChanged = false;
-            // 遍历Topic对象
+            // 遍历load对象下的filterDataByTopic对象(Map<String, FilterDataMapByTopic>)
             for (String topic : load.filterDataByTopic.keySet()) {
                 FilterDataMapByTopic dataMapByTopic = load.filterDataByTopic.get(topic);
                 if (dataMapByTopic == null) {
@@ -270,7 +286,7 @@ public class ConsumerFilterManager extends ConfigManager {
                     }
 
                     try {
-                    	// 遍历表达式
+                    	// 使用javaCC 词法编译器去遍历表达式
                         filterData.setCompiledExpression(
                             FilterFactory.INSTANCE.get(filterData.getExpressionType()).compile(filterData.getExpression())
                         );
@@ -293,6 +309,8 @@ public class ConsumerFilterManager extends ConfigManager {
                     if (filterData.getDeadTime() == 0) {
                         // we think all consumers are dead when load
                         long deadTime = System.currentTimeMillis() - 30 * 1000;
+                        
+                        // 将ConsumerFilterData对象设置为死亡
                         filterData.setDeadTime(
                             deadTime <= filterData.getBornTime() ? filterData.getBornTime() : deadTime
                         );
@@ -301,13 +319,14 @@ public class ConsumerFilterManager extends ConfigManager {
             }
 
             // 如果布隆过滤器更改的话,重新设置filterDataByTopic属性值
+            // false : 更新
             if (!bloomChanged) {
                 this.filterDataByTopic = load.filterDataByTopic;
             }
         }
     }
 
-    @Override// 编码该对象
+    @Override// 编码该对象并删除已经死亡的ConsumerFilterData对象
     public String encode(final boolean prettyFormat) {
         // clean
         {
@@ -316,13 +335,13 @@ public class ConsumerFilterManager extends ConfigManager {
         return RemotingSerializable.toJson(this, prettyFormat);
     }
 
-    // 擦除已经死亡指定时间的对象
+    // 擦除已经死亡指定时间(default = 24h)的ConsumerFilterData对象
     public void clean() {
         Iterator<Map.Entry<String, FilterDataMapByTopic>> topicIterator = this.filterDataByTopic.entrySet().iterator();
         while (topicIterator.hasNext()) {
             Map.Entry<String, FilterDataMapByTopic> filterDataMapByTopic = topicIterator.next();
 
-            Iterator<Map.Entry<String, ConsumerFilterData>> filterDataIterator
+            Iterator<Map.Entry<String /*consumer group*/, ConsumerFilterData>> filterDataIterator
                 = filterDataMapByTopic.getValue().getGroupFilterData().entrySet().iterator();
 
             while (filterDataIterator.hasNext()) {
@@ -370,7 +389,7 @@ public class ConsumerFilterManager extends ConfigManager {
             this.topic = topic;
         }
 
-        // 注销ConsumerFilterData对象
+        // 将consumerGroup从groupFilterData下注销ConsumerFilterData对象
         public void unRegister(String consumerGroup) {
         	// 判断是否存在该Map对象中
             if (!this.groupFilterData.containsKey(consumerGroup)) {
@@ -393,13 +412,14 @@ public class ConsumerFilterManager extends ConfigManager {
             data.setDeadTime(now);
         }
 
-        // 注册ConsumerFilterData对象
+        // 向groupFilterData对象中注册ConsumerFilterData对象
         public boolean register(String consumerGroup, String expression, String type, BloomFilterData bloomFilterData,
             long clientVersion) {
         	
             ConsumerFilterData old = this.groupFilterData.get(consumerGroup);
 
             if (old == null) {
+            	
             	// 创建ConsumerFilterData对象
                 ConsumerFilterData consumerFilterData = build(topic, consumerGroup, expression, type, clientVersion);
                 if (consumerFilterData == null) {
@@ -415,7 +435,8 @@ public class ConsumerFilterManager extends ConfigManager {
                     log.info("New consumer filter registered: {}", consumerFilterData);
                     return true;
                 } else {
-                	// 当小于先前的ClientVersion版本时
+                	// 当newChanage的ConsumerFilterData对象小于先前的ClientVersion版本时
+                	// 就忽略expressionType与expression属性值, realive
                     if (clientVersion <= old.getClientVersion()) {
                     	
                         if (!type.equals(old.getExpressionType()) || !expression.equals(old.getExpression())) {
@@ -425,7 +446,10 @@ public class ConsumerFilterManager extends ConfigManager {
                                 old.getExpressionType(), old.getExpression(),
                                 type, expression);
                         }
+                        
+                        // 当在== 的情况下并且处于死亡状态下
                         if (clientVersion == old.getClientVersion() && old.isDead()) {
+                        	
                         	// 复活该对象
                             reAlive(old);
                             return true;
@@ -441,6 +465,7 @@ public class ConsumerFilterManager extends ConfigManager {
                 }
             } else {
                 if (clientVersion <= old.getClientVersion()) {
+                	// 当type与expression不相等时
                     if (!type.equals(old.getExpressionType()) || !expression.equals(old.getExpression())) {
                         log.info("Ignore consumer({}:{}) filter, because of version {} <= {}, but maybe info changed!old={}:{}, ignored={}:{}",
                             consumerGroup, topic,
@@ -448,6 +473,8 @@ public class ConsumerFilterManager extends ConfigManager {
                             old.getExpressionType(), old.getExpression(),
                             type, expression);
                     }
+                    
+                    // 当在== 的情况下并且处于死亡状态下
                     if (clientVersion == old.getClientVersion() && old.isDead()) {
                         // 复活对象
                     	reAlive(old);
@@ -457,8 +484,10 @@ public class ConsumerFilterManager extends ConfigManager {
                     return false;
                 }
 
-                // 判断expression与type是否发生变化
+                // change = true : 判断expression与type存在一个不相等时:
                 boolean change = !old.getExpression().equals(expression) || !old.getExpressionType().equals(type);
+                
+                // 判断BoolFilterData是否发生变化 : change = true : 发生变化
                 if (old.getBloomFilterData() == null && bloomFilterData != null) {
                     change = true;
                 }
@@ -469,7 +498,7 @@ public class ConsumerFilterManager extends ConfigManager {
                 // if subscribe data is changed, or consumer is died too long.
                 // 对象属性值发生变化
                 if (change) {
-                	// 创建ConsumerFilterData对象
+                	// 当对应属性变化时,即创建ConsumerFilterData对象
                     ConsumerFilterData consumerFilterData = build(topic, consumerGroup, expression, type, clientVersion);
                     if (consumerFilterData == null) {
                         // new expression compile error, remove old, let client report error.
@@ -489,6 +518,7 @@ public class ConsumerFilterManager extends ConfigManager {
                 } else {
                 	// 设置版本号并复活对象
                     old.setClientVersion(clientVersion);
+                    
                     if (old.isDead()) {
                         reAlive(old); // 复活
                     }
@@ -500,7 +530,8 @@ public class ConsumerFilterManager extends ConfigManager {
         // 复活ConsumerFilterData对象
         protected void reAlive(ConsumerFilterData filterData) {
             long oldDeadTime = filterData.getDeadTime();
-            filterData.setDeadTime(0);
+            filterData.setDeadTime(0); // 设置deadtime为0
+            
             log.info("Re alive consumer filter: {}, oldDeadTime: {}", filterData, oldDeadTime);
         }
 
