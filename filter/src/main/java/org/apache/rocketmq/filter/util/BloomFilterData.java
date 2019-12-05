@@ -26,13 +26,14 @@ import java.util.Arrays;
  */
 public class BloomFilterData {
 
-	// 记录哈希函数哈希值  = 哈希函数长度
+	// 记录哈希函数哈希值  = 哈希函数长度 BloomFilter.k
     private int[] bitPos;
     
     // 布隆过滤器字节数组长度
     private int bitNum;
 
     public BloomFilterData() {
+    	
     }
 
     public BloomFilterData(int[] bitPos, int bitNum) {
