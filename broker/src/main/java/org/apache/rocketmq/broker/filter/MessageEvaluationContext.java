@@ -33,7 +33,7 @@ public class MessageEvaluationContext implements EvaluationContext {
         this.properties = properties;
     }
 
-    @Override
+    @Override // 从properties中获取指定key的value对象
     public Object get(final String name) {
         if (this.properties == null) {
             return null;
@@ -41,7 +41,7 @@ public class MessageEvaluationContext implements EvaluationContext {
         return this.properties.get(name);
     }
 
-    @Override
+    @Override // 返回key-value键值对Map对象
     public Map<String, Object> keyValues() {
         if (properties == null) {
             return null;
@@ -49,6 +49,7 @@ public class MessageEvaluationContext implements EvaluationContext {
 
         Map<String, Object> copy = new HashMap<String, Object>(properties.size(), 1);
 
+        // 将properties中的数据写入到Map对象中
         for (String key : properties.keySet()) {
             copy.put(key, properties.get(key));
         }
