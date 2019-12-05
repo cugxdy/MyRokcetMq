@@ -33,8 +33,10 @@ import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// 它记录某个group-topic-queueId的consumeQueue消费索引计数
 public class ConsumerOffsetManager extends ConfigManager {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
+    
     // topic与group分隔符
     private static final String TOPIC_GROUP_SEPARATOR = "@";
 
@@ -51,18 +53,21 @@ public class ConsumerOffsetManager extends ConfigManager {
         this.brokerController = brokerController;
     }
 
+    // 删除SubscriptionData = null & offsetInPersist <= minOffsetInStore的topic@group对象
     public void scanUnsubscribedTopic() {
     	
         Iterator<Entry<String, ConcurrentMap<Integer, Long>>> it = this.offsetTable.entrySet().iterator();
         while (it.hasNext()) {
             Entry<String, ConcurrentMap<Integer, Long>> next = it.next();
             
+            // topic@group字符串
             String topicAtGroup = next.getKey();
             String[] arrays = topicAtGroup.split(TOPIC_GROUP_SEPARATOR);
             if (arrays.length == 2) {
                 String topic = arrays[0];
                 String group = arrays[1];
 
+                // SubscriptionData = null && offsetInPersist <= minOffsetInStore
                 if (null == brokerController.getConsumerManager().findSubscriptionData(group, topic)
                     && this.offsetBehindMuchThanData(topic, next.getValue())) {
                     // 删除这个元素
@@ -73,13 +78,17 @@ public class ConsumerOffsetManager extends ConfigManager {
         }
     }
 
-    // 判断偏移量大小
+    // 判断topic-group下是否存在记录索引  < 实际consumeQueue中索引
+    // true : 表示所有的offsetInPersist <= minOffsetInStore;
     private boolean offsetBehindMuchThanData(final String topic, ConcurrentMap<Integer, Long> table) {
         Iterator<Entry<Integer, Long>> it = table.entrySet().iterator();
         boolean result = !table.isEmpty();
-
+        
+        // 判断topic-queueId下的offsetInPersist是否小于实际上的consumeQueue中的最小偏移量(单位:20字节)
         while (it.hasNext() && result) {
+        	
             Entry<Integer, Long> next = it.next();
+            // 获取topic-queueId下的consumeQueue中最小偏移量(单位:20字节)
             long minOffsetInStore = this.brokerController.getMessageStore().getMinOffsetInQueue(topic, next.getKey());
             long offsetInPersist = next.getValue();
             
@@ -89,14 +98,15 @@ public class ConsumerOffsetManager extends ConfigManager {
         return result;
     }
 
-    // 获取group所持有Topic
+    // 获取group所持有的Topic
     public Set<String> whichTopicByConsumer(final String group) {
         Set<String> topics = new HashSet<String>();
 
-        // 偏移量
+        // 获取offsetTable对象的索引号
         Iterator<Entry<String, ConcurrentMap<Integer, Long>>> it = this.offsetTable.entrySet().iterator();
         while (it.hasNext()) {
             Entry<String, ConcurrentMap<Integer, Long>> next = it.next();
+            // topic@group字符串
             String topicAtGroup = next.getKey();
             // 以@作为分隔符分隔
             String[] arrays = topicAtGroup.split(TOPIC_GROUP_SEPARATOR);
@@ -115,9 +125,11 @@ public class ConsumerOffsetManager extends ConfigManager {
     public Set<String> whichGroupByTopic(final String topic) {
         Set<String> groups = new HashSet<String>();
 
+        // 获取offsetTable对象的迭代器
         Iterator<Entry<String, ConcurrentMap<Integer, Long>>> it = this.offsetTable.entrySet().iterator();
         while (it.hasNext()) {
             Entry<String, ConcurrentMap<Integer, Long>> next = it.next();
+            // 获取topic@group字符串
             String topicAtGroup = next.getKey();
             // 以@作为分隔符分隔
             String[] arrays = topicAtGroup.split(TOPIC_GROUP_SEPARATOR);
@@ -132,7 +144,7 @@ public class ConsumerOffsetManager extends ConfigManager {
         return groups;
     }
 
-    // 更新偏移量
+    // 更新offsetTable中的偏移量
     public void commitOffset(final String clientHost, final String group, final String topic, final int queueId,
         final long offset) {
         // topic@group
@@ -140,20 +152,20 @@ public class ConsumerOffsetManager extends ConfigManager {
         this.commitOffset(clientHost, key, queueId, offset);
     }
 
-    // 更新偏移量
-    private void commitOffset(final String clientHost, final String key, final int queueId, final long offset) {
-        ConcurrentMap<Integer, Long> map = this.offsetTable.get(key);
+    // 更新客户端在topic@group-queueId-Offset下的消费偏移量
+    private void commitOffset(final String clientHost, final String topicGroup, final int queueId, final long offset) {
+        ConcurrentMap<Integer, Long> map = this.offsetTable.get(topicGroup);
         if (null == map) {
         	// 更新偏移量
             map = new ConcurrentHashMap<Integer, Long>(32);
             map.put(queueId, offset);
-            this.offsetTable.put(key, map);
+            this.offsetTable.put(topicGroup, map);
         } else {
-        	// 存储偏移量
+        	// 存储偏移量(记录topic-queueId下的索引)
             Long storeOffset = map.put(queueId, offset);
             // 当offset小于storeOffset,可能出现重复消费
             if (storeOffset != null && offset < storeOffset) {
-                log.warn("[NOTIFYME]update consumer offset less than store. clientHost={}, key={}, queueId={}, requestOffset={}, storeOffset={}", clientHost, key, queueId, offset, storeOffset);
+                log.warn("[NOTIFYME]update consumer offset less than store. clientHost={}, key={}, queueId={}, requestOffset={}, storeOffset={}", clientHost, topicGroup, queueId, offset, storeOffset);
             }
         }
     }
@@ -164,6 +176,7 @@ public class ConsumerOffsetManager extends ConfigManager {
         String key = topic + TOPIC_GROUP_SEPARATOR + group;
         ConcurrentMap<Integer, Long> map = this.offsetTable.get(key);
         if (null != map) {
+        	// 获取指定topic-Group-queueId下索引号
             Long offset = map.get(queueId);
             if (offset != null)
                 return offset;
@@ -179,12 +192,15 @@ public class ConsumerOffsetManager extends ConfigManager {
 
     @Override // 获取配置文件路径
     public String configFilePath() {
+    	// config/consumerOffset.json
         return BrokerPathConfigHelper.getConsumerOffsetPath(this.brokerController.getMessageStoreConfig().getStorePathRootDir());
     }
 
     @Override
     public void decode(String jsonString) {
         if (jsonString != null) {
+        	// 使用JSON将字符串解析成ConsumerOffsetManager对象
+        	// jsonString格式为:{key:{key:value}}
             ConsumerOffsetManager obj = RemotingSerializable.fromJson(jsonString, ConsumerOffsetManager.class);
             if (obj != null) {
                 this.offsetTable = obj.offsetTable;
@@ -192,6 +208,7 @@ public class ConsumerOffsetManager extends ConfigManager {
         }
     }
 
+    // 将this对象编码成jsonString字符串
     public String encode(final boolean prettyFormat) {
         return RemotingSerializable.toJson(this, prettyFormat);
     }
@@ -208,13 +225,15 @@ public class ConsumerOffsetManager extends ConfigManager {
 
     // 当ConsumerOffsetManager中偏移量大于MessageStore对象中的偏移量时
     // 获取每个队列的最小偏移量集合Map对象
+    // filterGroups: 没什么作用
     public Map<Integer, Long> queryMinOffsetInAllGroup(final String topic, final String filterGroups) {
 
         Map<Integer, Long> queueMinOffset = new HashMap<Integer, Long>();
+        // 获取topicGroup字符串
         Set<String> topicGroups = this.offsetTable.keySet();
         // 判断是否为空
         if (!UtilAll.isBlank(filterGroups)) {
-        	// 过滤掉指定group集合
+        	// 过滤掉指定filterGroups集合,即filterGroups指定的group不需要
             for (String group : filterGroups.split(",")) {
                 Iterator<String> it = topicGroups.iterator();
                 while (it.hasNext()) {
@@ -227,16 +246,20 @@ public class ConsumerOffsetManager extends ConfigManager {
 
         
         for (Map.Entry<String, ConcurrentMap<Integer, Long>> offSetEntry : this.offsetTable.entrySet()) {
-            String topicGroup = offSetEntry.getKey();
+            // 获取topicGroup字符串
+        	String topicGroup = offSetEntry.getKey();
             String[] topicGroupArr = topicGroup.split(TOPIC_GROUP_SEPARATOR);
+            
             // 当指定topic相等时
             if (topic.equals(topicGroupArr[0])) {
                 for (Entry<Integer, Long> entry : offSetEntry.getValue().entrySet()) {
-                	// 获取在MessageStore对象中id=entry.getKey()的偏移量
+                	// 获取topic-queueId下的consumeQueue中最小偏移量(单位:20字节)
                     long minOffset = this.brokerController.getMessageStore().getMinOffsetInQueue(topic, entry.getKey());
-                    // 当ConsumerOffsetManager中偏移量大于MessageStore对象中的偏移量时
+                    // 当ConsumerOffsetManager中偏移量大于MessageStore对象consumeQueue中的偏移量时
                     if (entry.getValue() >= minOffset) {
+                    	// value有效时
                         Long offset = queueMinOffset.get(entry.getKey());
+                        
                         // 将key-value键值对存入queueMinOffset对象中
                         if (offset == null) {
                             queueMinOffset.put(entry.getKey(), Math.min(Long.MAX_VALUE, entry.getValue()));
@@ -246,7 +269,6 @@ public class ConsumerOffsetManager extends ConfigManager {
                     }
                 }
             }
-
         }
         return queueMinOffset;
     }
