@@ -36,6 +36,8 @@ public class CommitLogDispatcherCalcBitMap implements CommitLogDispatcher {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.FILTER_LOGGER_NAME);
 
     protected final BrokerConfig brokerConfig;
+    
+    // 记录ConsumerFilterData对象
     protected final ConsumerFilterManager consumerFilterManager;
 
     public CommitLogDispatcherCalcBitMap(BrokerConfig brokerConfig, ConsumerFilterManager consumerFilterManager) {
@@ -45,12 +47,13 @@ public class CommitLogDispatcherCalcBitMap implements CommitLogDispatcher {
 
     @Override
     public void dispatch(DispatchRequest request) {
+    	// default = false
         if (!this.brokerConfig.isEnableCalcFilterBitMap()) {
             return;
         }
 
         try {
-
+        	// 获取topic下的ConsumerFilterData对象集合
             Collection<ConsumerFilterData> filterDatas = consumerFilterManager.get(request.getTopic());
 
             if (filterDatas == null || filterDatas.isEmpty()) {
@@ -58,6 +61,7 @@ public class CommitLogDispatcherCalcBitMap implements CommitLogDispatcher {
             }
 
             Iterator<ConsumerFilterData> iterator = filterDatas.iterator();
+            // 创建BitsArray对象(byte[]字节数组)
             BitsArray filterBitMap = BitsArray.create(
                 this.consumerFilterManager.getBloomFilter().getM()
             );
@@ -66,11 +70,13 @@ public class CommitLogDispatcherCalcBitMap implements CommitLogDispatcher {
             while (iterator.hasNext()) {
                 ConsumerFilterData filterData = iterator.next();
 
+                // expression == null
                 if (filterData.getCompiledExpression() == null) {
                     log.error("[BUG] Consumer in filter manager has no compiled expression! {}", filterData);
                     continue;
                 }
 
+                // BloomFilterData == null
                 if (filterData.getBloomFilterData() == null) {
                     log.error("[BUG] Consumer in filter manager has no bloom data! {}", filterData);
                     continue;
@@ -80,6 +86,7 @@ public class CommitLogDispatcherCalcBitMap implements CommitLogDispatcher {
                 try {
                     MessageEvaluationContext context = new MessageEvaluationContext(request.getPropertiesMap());
 
+                    // JAVA cc编译字符串
                     ret = filterData.getCompiledExpression().evaluate(context);
                 } catch (Throwable e) {
                     log.error("Calc filter bit map error!commitLogOffset={}, consumer={}, {}", request.getCommitLogOffset(), filterData, e);
@@ -87,19 +94,23 @@ public class CommitLogDispatcherCalcBitMap implements CommitLogDispatcher {
 
                 log.debug("Result of Calc bit map:ret={}, data={}, props={}, offset={}", ret, filterData, request.getPropertiesMap(), request.getCommitLogOffset());
 
-                // eval true
+                // eval true 
                 if (ret != null && ret instanceof Boolean && (Boolean) ret) {
-                    consumerFilterManager.getBloomFilter().hashTo(
+                    
+                	// 将ConsumerFilterData中的int[]数据写入到BitsArray中
+                	consumerFilterManager.getBloomFilter().hashTo(
                         filterData.getBloomFilterData(),
                         filterBitMap
                     );
                 }
             }
 
+            // 将BitsArray对象byte[]数据设置至DispatchRequest对象中
+            // 最终设置ConsumeQueueExt.bitmap: byte[] 字节数组上
             request.setBitMap(filterBitMap.bytes());
 
             long eclipseTime = System.currentTimeMillis() - startTime;
-            // 1ms
+            // 1ms 记录设置BitMap所用时间戳
             if (eclipseTime >= 1) {
                 log.warn("Spend {} ms to calc bit map, consumerNum={}, topic={}", eclipseTime, filterDatas.size(), request.getTopic());
             }
