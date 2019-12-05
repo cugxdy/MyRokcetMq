@@ -50,7 +50,7 @@ public class TopicConfigManager extends ConfigManager {
     private transient final Lock lockTopicConfigTable = new ReentrantLock();
     
     // Topic名称-TopicConfig的一对一关系 <String, TopicConfig>
-    private final ConcurrentMap<String, TopicConfig> topicConfigTable =
+    private final ConcurrentMap<String /* topic */, TopicConfig> topicConfigTable =
         new ConcurrentHashMap<String, TopicConfig>(1024);
     
     // 数据版本号(时间戳 + AtomicLong)
