@@ -20,16 +20,28 @@ import io.netty.channel.Channel;
 import org.apache.rocketmq.remoting.protocol.LanguageCode;
 
 public class ClientChannelInfo {
+	
+	// 客户端Channel对象(Netty)
     private final Channel channel;
+    
+    // 客户端ID
     private final String clientId;
+    
+    // 客户端使用语言(JAVA)
     private final LanguageCode language;
+    
+    // 客户端版本号
     private final int version;
+    
+    // 客户端与服务器交互时间戳
     private volatile long lastUpdateTimestamp = System.currentTimeMillis();
 
+    
     public ClientChannelInfo(Channel channel) {
         this(channel, null, null, 0);
     }
 
+    
     public ClientChannelInfo(Channel channel, String clientId, LanguageCode language, int version) {
         this.channel = channel;
         this.clientId = clientId;
