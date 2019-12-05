@@ -20,7 +20,10 @@ package org.apache.rocketmq.broker.latency;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
+// 它是FutureTaskExt<V>对FutureTask<V>
 public class FutureTaskExt<V> extends FutureTask<V> {
+	
+	// 运行任务单元
     private final Runnable runnable;
 
     public FutureTaskExt(final Callable<V> callable) {
