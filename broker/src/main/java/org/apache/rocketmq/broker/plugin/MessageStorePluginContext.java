@@ -23,9 +23,16 @@ import org.apache.rocketmq.store.config.MessageStoreConfig;
 import org.apache.rocketmq.store.stats.BrokerStatsManager;
 
 public class MessageStorePluginContext {
+	
+	// Message store 存储层配置对象
     private MessageStoreConfig messageStoreConfig;
+    
+    // Broker统计服务对象
     private BrokerStatsManager brokerStatsManager;
+    
     private MessageArrivingListener messageArrivingListener;
+    
+    // BrokerConfig配置对象
     private BrokerConfig brokerConfig;
 
     public MessageStorePluginContext(MessageStoreConfig messageStoreConfig,
