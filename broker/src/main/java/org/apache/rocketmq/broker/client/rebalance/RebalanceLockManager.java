@@ -128,7 +128,7 @@ public class RebalanceLockManager {
             	// 已处于上锁状态中(1、 null || 锁过期)
                 boolean locked = lockEntry.isLocked(clientId);
                 
-                // true : 标识该MessageQueue已被
+                // true : 标识该MessageQueue已被clientId锁住
                 if (locked) {
                 	// 更新锁获取开始时间戳
                     lockEntry.setLastUpdateTimestamp(System.currentTimeMillis());
