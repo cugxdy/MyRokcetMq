@@ -20,17 +20,27 @@ package org.apache.rocketmq.broker.filtersrv;
 import org.slf4j.Logger;
 
 public class FilterServerUtil {
+	
     public static void callShell(final String shellString, final Logger log) {
         Process process = null;
         try {
+        	// 以" "分隔字符串对象,数组形式
             String[] cmdArray = splitShellString(shellString);
+            // 运行命令行程序
             process = Runtime.getRuntime().exec(cmdArray);
+            
+            // Causes the current thread to wait, 
+            // if necessary, until theprocess represented by this Process object hasterminated. 
+            // This method returns immediately if the subprocesshas already terminated. 
+            // If the subprocess has not yetterminated, 
+            // the calling thread will be blocked until thesubprocess exits.
             process.waitFor();
             log.info("CallShell: <{}> OK", shellString);
         } catch (Throwable e) {
             log.error("CallShell: readLine IOException, {}", shellString, e);
         } finally {
             if (null != process)
+            	// 关闭process对象
                 process.destroy();
         }
     }
