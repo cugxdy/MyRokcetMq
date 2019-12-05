@@ -45,25 +45,28 @@ public class TopicConfigManager extends ConfigManager {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
     // 锁超时3s
     private static final long LOCK_TIMEOUT_MILLIS = 3000;
+    
     // JDK的非公平锁
     private transient final Lock lockTopicConfigTable = new ReentrantLock();
-
-    // Topic名称-TopicConfig的一对一关系
+    
+    // Topic名称-TopicConfig的一对一关系 <String, TopicConfig>
     private final ConcurrentMap<String, TopicConfig> topicConfigTable =
         new ConcurrentHashMap<String, TopicConfig>(1024);
     
-    // 数据版本号
+    // 数据版本号(时间戳 + AtomicLong)
     private final DataVersion dataVersion = new DataVersion();
     
     // 存储系统Topic名称集合
     private final Set<String> systemTopicList = new HashSet<String>();
     
-    // 控制器
+    // Broker服务器控制器对象
     private transient BrokerController brokerController;
 
     public TopicConfigManager() {
+    	
     }
 
+    // 创建系统默认Topic下的TopicConfig对象
     public TopicConfigManager(BrokerController brokerController) {
         this.brokerController = brokerController;
         // 加载系统默认Topic对象
@@ -83,6 +86,7 @@ public class TopicConfigManager extends ConfigManager {
         {
         	
             // MixAll.DEFAULT_TOPIC 判断是否可以自动创建Topic
+        	// 它作为其它Topic的父类对象
             if (this.brokerController.getBrokerConfig().isAutoCreateTopicEnable()) {
             	// 名称为TBW102的TopicConfig对象
             	String topic = MixAll.DEFAULT_TOPIC;
@@ -94,6 +98,7 @@ public class TopicConfigManager extends ConfigManager {
                 topicConfig.setWriteQueueNums(this.brokerController.getBrokerConfig()
                     .getDefaultTopicQueueNums());
                 
+                // PERM_INHERIT允许继承
                 int perm = PermName.PERM_INHERIT | PermName.PERM_READ | PermName.PERM_WRITE;
                 topicConfig.setPerm(perm);
                 this.topicConfigTable.put(topicConfig.getTopicName(), topicConfig);
@@ -110,9 +115,9 @@ public class TopicConfigManager extends ConfigManager {
             topicConfig.setWriteQueueNums(1024);
             this.topicConfigTable.put(topicConfig.getTopicName(), topicConfig);
         }
+        
         {
-        	
-        	// 名称为DefaultCluster的TopicConfig对象
+        	// 名称为(default)DefaultCluster的TopicConfig对象
             String topic = this.brokerController.getBrokerConfig().getBrokerClusterName();
             TopicConfig topicConfig = new TopicConfig(topic);
             this.systemTopicList.add(topic);
@@ -141,6 +146,7 @@ public class TopicConfigManager extends ConfigManager {
             topicConfig.setPerm(perm);
             this.topicConfigTable.put(topicConfig.getTopicName(), topicConfig);
         }
+        
         {
             // MixAll.OFFSET_MOVED_EVENT
         	// 名称为OFFSET_MOVED_EVENT的TopicConfig对象
@@ -164,7 +170,7 @@ public class TopicConfigManager extends ConfigManager {
         return this.systemTopicList;
     }
 
-    // 判断是否具备发送msg的权限
+    // 判断是否具备发送msg的权限(true = !TBW102)
     public boolean isTopicCanSendMessage(final String topic) {
         return !topic.equals(MixAll.DEFAULT_TOPIC);
     }
@@ -184,7 +190,7 @@ public class TopicConfigManager extends ConfigManager {
         	// 在3s内尝试获取锁资源,获得成功,即进入if条件语句中
             if (this.lockTopicConfigTable.tryLock(LOCK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
                 try {
-                	// 判断是否已经存在
+                	// 判断是否已经存在,存在即返回
                     topicConfig = this.topicConfigTable.get(topic);
                     if (topicConfig != null)
                         return topicConfig;
@@ -192,8 +198,9 @@ public class TopicConfigManager extends ConfigManager {
                     // 获取defaultTopic的TopicConfig对象
                     TopicConfig defaultTopicConfig = this.topicConfigTable.get(defaultTopic);
                     if (defaultTopicConfig != null) {
-                    	// 判断是否为名称为TBW102的TopicConfig对象
+                    	// true : TBW102
                         if (defaultTopic.equals(MixAll.DEFAULT_TOPIC)) {
+                        	// true : autoCreateTopicEnable = false
                             if (!this.brokerController.getBrokerConfig().isAutoCreateTopicEnable()) {
                             	// 设置读写权限
                                 defaultTopicConfig.setPerm(PermName.PERM_READ | PermName.PERM_WRITE);
@@ -204,7 +211,7 @@ public class TopicConfigManager extends ConfigManager {
                         if (PermName.isInherited(defaultTopicConfig.getPerm())) {
                             topicConfig = new TopicConfig(topic);
 
-                            // 获取队列数目
+                            // 获取队列数目(不允许大于defaultTopic下的读写队列数)
                             int queueNums =
                                 clientDefaultTopicQueueNums > defaultTopicConfig.getWriteQueueNums() ? defaultTopicConfig
                                     .getWriteQueueNums() : clientDefaultTopicQueueNums;
@@ -216,8 +223,11 @@ public class TopicConfigManager extends ConfigManager {
                             // 设置读写队列数目
                             topicConfig.setReadQueueNums(queueNums);
                             topicConfig.setWriteQueueNums(queueNums);
+                            
                             // 设置读写权限
                             int perm = defaultTopicConfig.getPerm();
+                            
+                            // 取消PERM_INHERIT标识
                             perm &= ~PermName.PERM_INHERIT;
                             
                             topicConfig.setPerm(perm);
@@ -225,12 +235,12 @@ public class TopicConfigManager extends ConfigManager {
                             topicConfig.setTopicSysFlag(topicSysFlag);
                             topicConfig.setTopicFilterType(defaultTopicConfig.getTopicFilterType());
                         } else {
-                        	// 创建失败
+                        	// 创建失败(不具备PERM_INHERIT标识)
                             log.warn("Create new topic failed, because the default topic[{}] has no perm [{}] producer:[{}]",
                                 defaultTopic, defaultTopicConfig.getPerm(), remoteAddress);
                         }
                     } else {
-                    	// 创建失败
+                    	// 创建失败(父类topic不存在)
                         log.warn("Create new topic failed, because the default topic[{}] not exist. producer:[{}]",
                             defaultTopic, remoteAddress);
                     }
@@ -246,6 +256,7 @@ public class TopicConfigManager extends ConfigManager {
 
                         createNew = true;
 
+                        // 将当前对象topic-topicConfig对象写入topics.json文件中
                         this.persist();
                     }
                 } finally {
@@ -257,6 +268,7 @@ public class TopicConfigManager extends ConfigManager {
         }
 
         if (createNew) {
+        	// 向namesrv中发送topic配置信息
             this.brokerController.registerBrokerAll(false, true);
         }
 
@@ -270,6 +282,7 @@ public class TopicConfigManager extends ConfigManager {
         final int perm,
         final int topicSysFlag) {
     	
+    	// 存在即返回
         TopicConfig topicConfig = this.topicConfigTable.get(topic);
         if (topicConfig != null)
             return topicConfig;
@@ -277,6 +290,7 @@ public class TopicConfigManager extends ConfigManager {
         boolean createNew = false;
 
         try {
+        	// 在3s内尝试获取锁资源,获得成功,即进入if条件语句中
             if (this.lockTopicConfigTable.tryLock(LOCK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
                 try {
                     topicConfig = this.topicConfigTable.get(topic);
@@ -298,6 +312,8 @@ public class TopicConfigManager extends ConfigManager {
                     this.topicConfigTable.put(topic, topicConfig);
                     createNew = true;
                     this.dataVersion.nextVersion();
+                    
+                    // 记录当前topicConfig中信息写入到topics.json文件中
                     this.persist();
                 } finally {
                     this.lockTopicConfigTable.unlock();
@@ -308,7 +324,7 @@ public class TopicConfigManager extends ConfigManager {
         }
 
         if (createNew) {
-        	// 注册Broker至namesrv服务器
+        	// 向namesrv服务器注册当前broker服务器中的topics配置信息
             this.brokerController.registerBrokerAll(false, true);
         }
 
@@ -317,7 +333,7 @@ public class TopicConfigManager extends ConfigManager {
 
     // 更新指定topic的TopicConfig对象的topicSysFlag
     // unit = true : 设置 FLAG_UNIT
-    // unit = true : 清除 FLAG_UNIT
+    // unit = false : 清除 FLAG_UNIT
     public void updateTopicUnitFlag(final String topic, final boolean unit) {
 
         TopicConfig topicConfig = this.topicConfigTable.get(topic);
@@ -338,11 +354,14 @@ public class TopicConfigManager extends ConfigManager {
 
             // 更新配置文件
             this.persist();
+            
+            // 向namesrv服务器注册当前broker服务器中的topics配置信息
             this.brokerController.registerBrokerAll(false, true);
         }
     }
 
     // 更新TopicConfig对象topicSysFlag属性值
+    // hasUnitSub = true: 将topicConfig对象设置FLAG_UNIT_SUB标识
     public void updateTopicUnitSubFlag(final String topic, final boolean hasUnitSub) {
         TopicConfig topicConfig = this.topicConfigTable.get(topic);
         if (topicConfig != null) {
@@ -357,15 +376,19 @@ public class TopicConfigManager extends ConfigManager {
 
             this.topicConfigTable.put(topic, topicConfig);
 
+            // 更新数据版本
             this.dataVersion.nextVersion();
 
+            // 记录当前topicConfig中信息写入到topics.json文件中
             this.persist();
+            
+            // 向namesrv服务器注册当前broker服务器中的topics配置信息
             this.brokerController.registerBrokerAll(false, true);
         }
     }
 
     // 将topicConfig存入topicConfigTable集合中
-    // 如果已有则修改,没有则直接添加
+    // 如果已有则修改, 没有则直接添加
     public void updateTopicConfig(final TopicConfig topicConfig) {
         TopicConfig old = this.topicConfigTable.put(topicConfig.getTopicName(), topicConfig);
         if (old != null) {
@@ -376,6 +399,7 @@ public class TopicConfigManager extends ConfigManager {
 
         this.dataVersion.nextVersion();
 
+        // 记录当前topicConfig中信息写入到topics.json文件中
         this.persist();
     }
 
@@ -389,6 +413,7 @@ public class TopicConfigManager extends ConfigManager {
         	boolean isChange = false;
             Set<String> orderTopics = orderKVTableFromNs.getTable().keySet();
             
+            // 将在KVTable对象中的topicConfig对象中order设置为true
             for (String topic : orderTopics) {
                 TopicConfig topicConfig = this.topicConfigTable.get(topic);
                 // 将Topic设置有序(order = true)
@@ -399,6 +424,7 @@ public class TopicConfigManager extends ConfigManager {
                 }
             }
 
+            // 将不在KVTable对象中的topicConfig对象中order设置为false
             for (Map.Entry<String, TopicConfig> entry : this.topicConfigTable.entrySet()) {
                 String topic = entry.getKey();
                 if (!orderTopics.contains(topic)) {
@@ -414,13 +440,16 @@ public class TopicConfigManager extends ConfigManager {
             }
 
             if (isChange) {
+            	// 更新数据版本号
                 this.dataVersion.nextVersion();
+                
+                // 记录当前topicConfig中信息写入到topics.json文件中
                 this.persist();
             }
         }
     }
 
-    // 判断是否有序(order)
+    // 判断指定topic是否有序(order)
     public boolean isOrderTopic(final String topic) {
         TopicConfig topicConfig = this.topicConfigTable.get(topic);
         if (topicConfig == null) {
@@ -435,7 +464,10 @@ public class TopicConfigManager extends ConfigManager {
         TopicConfig old = this.topicConfigTable.remove(topic);
         if (old != null) {
             log.info("delete topic config OK, topic: {}", old);
+            // 更新数据版本
             this.dataVersion.nextVersion();
+            
+            // 记录当前topicConfig中信息写入到topics.json文件中
             this.persist();
         } else {
             log.warn("delete topic config failed, topic: {} not exists", topic);
@@ -447,6 +479,7 @@ public class TopicConfigManager extends ConfigManager {
         TopicConfigSerializeWrapper topicConfigSerializeWrapper = new TopicConfigSerializeWrapper();
         topicConfigSerializeWrapper.setTopicConfigTable(this.topicConfigTable);
         topicConfigSerializeWrapper.setDataVersion(this.dataVersion);
+        
         return topicConfigSerializeWrapper;
     }
 
@@ -455,7 +488,7 @@ public class TopicConfigManager extends ConfigManager {
         return encode(false);
     }
 
-    @Override // 获取配置文件路径
+    @Override // 获取配置文件路径(config/topics.json)
     public String configFilePath() {
         return BrokerPathConfigHelper.getTopicConfigPath(this.brokerController.getMessageStoreConfig()
             .getStorePathRootDir());
@@ -471,7 +504,7 @@ public class TopicConfigManager extends ConfigManager {
                 this.topicConfigTable.putAll(topicConfigSerializeWrapper.getTopicConfigTable());
                 // 设置版本号
                 this.dataVersion.assignNewOne(topicConfigSerializeWrapper.getDataVersion());
-                // 打印配置选项
+                // 打印配置 选项格式为:load exist local topic, {topic}
                 this.printLoadDataWhenFirstBoot(topicConfigSerializeWrapper);
             }
         }
@@ -482,9 +515,12 @@ public class TopicConfigManager extends ConfigManager {
         TopicConfigSerializeWrapper topicConfigSerializeWrapper = new TopicConfigSerializeWrapper();
         topicConfigSerializeWrapper.setTopicConfigTable(this.topicConfigTable);
         topicConfigSerializeWrapper.setDataVersion(this.dataVersion);
+        
+        // 将topicConfigSerializeWrapper序列化成json对象
         return topicConfigSerializeWrapper.toJson(prettyFormat);
     }
 
+    // 打印服务器存在的topic消息主题
     private void printLoadDataWhenFirstBoot(final TopicConfigSerializeWrapper tcs) {
         Iterator<Entry<String, TopicConfig>> it = tcs.getTopicConfigTable().entrySet().iterator();
         while (it.hasNext()) {
@@ -493,10 +529,12 @@ public class TopicConfigManager extends ConfigManager {
         }
     }
 
+    // 获取数据版本号
     public DataVersion getDataVersion() {
         return dataVersion;
     }
 
+    // 获取topicConfig配置Map对象
     public ConcurrentMap<String, TopicConfig> getTopicConfigTable() {
         return topicConfigTable;
     }
