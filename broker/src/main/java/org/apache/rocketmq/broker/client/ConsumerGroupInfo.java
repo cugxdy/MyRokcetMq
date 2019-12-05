@@ -33,21 +33,30 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ConsumerGroupInfo {
+	
     private static final Logger log = LoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
+    
+    // 消费组名称
     private final String groupName;
     
+    // topic下的SubscriptionData对象
     private final ConcurrentMap<String/* Topic */, SubscriptionData> subscriptionTable =
         new ConcurrentHashMap<String, SubscriptionData>();
     
+    // 该消费组下的客户端Map对象(客户端Channel对象)
     private final ConcurrentMap<Channel, ClientChannelInfo> channelInfoTable =
         new ConcurrentHashMap<Channel, ClientChannelInfo>(16);
     
+    // 消费模式(pull[推送],pull[拉取])
     private volatile ConsumeType consumeType;
+    
+    // 消息模式(broadcasting, clustering)
     private volatile MessageModel messageModel;
     
+    // 从first、last、timestamp三种类型开始消费
     private volatile ConsumeFromWhere consumeFromWhere;
     
-    // 最近更新时间
+    // 记录最近更新时间
     private volatile long lastUpdateTimestamp = System.currentTimeMillis();
 
     public ConsumerGroupInfo(String groupName, ConsumeType consumeType, MessageModel messageModel,
@@ -58,10 +67,13 @@ public class ConsumerGroupInfo {
         this.consumeFromWhere = consumeFromWhere;
     }
 
+    // 获取指定clientId的ClientChannelInfo对象
     public ClientChannelInfo findChannel(final String clientId) {
+    	// 遍历channelInfoTable对象
         Iterator<Entry<Channel, ClientChannelInfo>> it = this.channelInfoTable.entrySet().iterator();
         while (it.hasNext()) {
             Entry<Channel, ClientChannelInfo> next = it.next();
+            // 将clientId进行比较,找出合适的clientChannelInfo对象
             if (next.getValue().getClientId().equals(clientId)) {
                 return next.getValue();
             }
@@ -70,14 +82,17 @@ public class ConsumerGroupInfo {
         return null;
     }
 
-    public ConcurrentMap<String, SubscriptionData> getSubscriptionTable() {
+    // 获取subscriptionTable属性值
+    public ConcurrentMap<String /* topic */, SubscriptionData> getSubscriptionTable() {
         return subscriptionTable;
     }
 
+    // 获取channelInfoTable属性值
     public ConcurrentMap<Channel, ClientChannelInfo> getChannelInfoTable() {
         return channelInfoTable;
     }
 
+    // 获取该消费组下所有的Channel对象
     public List<Channel> getAllChannel() {
         List<Channel> result = new ArrayList<>();
 
@@ -86,6 +101,7 @@ public class ConsumerGroupInfo {
         return result;
     }
 
+    // 获取该消费组所有的Chanel对象Id
     public List<String> getAllClientId() {
         List<String> result = new ArrayList<>();
 
@@ -94,12 +110,14 @@ public class ConsumerGroupInfo {
         while (it.hasNext()) {
             Entry<Channel, ClientChannelInfo> entry = it.next();
             ClientChannelInfo clientChannelInfo = entry.getValue();
+            // 将clientId加入result集合中
             result.add(clientChannelInfo.getClientId());
         }
 
         return result;
     }
 
+    // 从channelInfotable中将channel对象删除
     public void unregisterChannel(final ClientChannelInfo clientChannelInfo) {
         ClientChannelInfo old = this.channelInfoTable.remove(clientChannelInfo.getChannel());
         if (old != null) {
@@ -107,6 +125,7 @@ public class ConsumerGroupInfo {
         }
     }
 
+    // 从<Channel, ClientChannelInfo>Map对象中删除Channelkey值
     public boolean doChannelCloseEvent(final String remoteAddr, final Channel channel) {
         final ClientChannelInfo info = this.channelInfoTable.remove(channel);
         if (info != null) {
@@ -119,14 +138,18 @@ public class ConsumerGroupInfo {
         return false;
     }
 
+    // 更新同一消费组下的Channel对象
     public boolean updateChannel(final ClientChannelInfo infoNew, ConsumeType consumeType,
         MessageModel messageModel, ConsumeFromWhere consumeFromWhere) {
-        boolean updated = false;
+        
+    	// 记录创建ClientChannelInfo对象是否成功
+    	boolean updated = false;
         this.consumeType = consumeType;
         this.messageModel = messageModel;
         this.consumeFromWhere = consumeFromWhere;
 
         ClientChannelInfo infoOld = this.channelInfoTable.get(infoNew.getChannel());
+        // 当为新创建ClientChannelInfo对象
         if (null == infoOld) {
             ClientChannelInfo prev = this.channelInfoTable.put(infoNew.getChannel(), infoNew);
             if (null == prev) {
@@ -146,26 +169,33 @@ public class ConsumerGroupInfo {
             }
         }
 
+        // 记录最新更新时间
         this.lastUpdateTimestamp = System.currentTimeMillis();
+        // 设置最新更新时间
         infoOld.setLastUpdateTimestamp(this.lastUpdateTimestamp);
 
         return updated;
     }
 
+    // 将SubscriptionData集合对象添加至subscriptionTable属性Map对象中
     public boolean updateSubscription(final Set<SubscriptionData> subList) {
         boolean updated = false;
 
         for (SubscriptionData sub : subList) {
             SubscriptionData old = this.subscriptionTable.get(sub.getTopic());
             if (old == null) {
+            	// subscriptionTable属性中不包含该sub时
                 SubscriptionData prev = this.subscriptionTable.putIfAbsent(sub.getTopic(), sub);
+                
                 if (null == prev) {
                     updated = true;
                     log.info("subscription changed, add new topic, group: {} {}",
                         this.groupName,
                         sub.toString());
                 }
+                // 当版本与 old的版本时
             } else if (sub.getSubVersion() > old.getSubVersion()) {
+            	// 当为push时,日志记录subscription changed
                 if (this.consumeType == ConsumeType.CONSUME_PASSIVELY) {
                     log.info("subscription changed, group: {} OLD: {} NEW: {}",
                         this.groupName,
@@ -178,9 +208,11 @@ public class ConsumerGroupInfo {
             }
         }
 
+        // 下面代码是将除subList中的topic之外的topic所对应的SubscriptionData从subscriptionTable中删除
         Iterator<Entry<String, SubscriptionData>> it = this.subscriptionTable.entrySet().iterator();
         while (it.hasNext()) {
             Entry<String, SubscriptionData> next = it.next();
+            // 获取topic
             String oldTopic = next.getKey();
 
             boolean exist = false;
@@ -208,11 +240,12 @@ public class ConsumerGroupInfo {
         return updated;
     }
 
+    // 获取所有的topic集合对象
     public Set<String> getSubscribeTopics() {
         return subscriptionTable.keySet();
     }
 
-    // 获取SubscriptionData对象
+    // 获取指定topic下的SubscriptionData对象
     public SubscriptionData findSubscriptionData(final String topic) {
         return this.subscriptionTable.get(topic);
     }
@@ -221,6 +254,7 @@ public class ConsumerGroupInfo {
         return consumeType;
     }
 
+    // 设置消费类型(pull,push)
     public void setConsumeType(ConsumeType consumeType) {
         this.consumeType = consumeType;
     }
@@ -229,6 +263,7 @@ public class ConsumerGroupInfo {
         return messageModel;
     }
 
+    // 设置消息模式(boardcasting, clustering)
     public void setMessageModel(MessageModel messageModel) {
         this.messageModel = messageModel;
     }
@@ -249,6 +284,7 @@ public class ConsumerGroupInfo {
         return consumeFromWhere;
     }
 
+    // 设置从什么地方开始消费
     public void setConsumeFromWhere(ConsumeFromWhere consumeFromWhere) {
         this.consumeFromWhere = consumeFromWhere;
     }
