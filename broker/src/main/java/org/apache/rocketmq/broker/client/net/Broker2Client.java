@@ -57,26 +57,32 @@ public class Broker2Client {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
     private final BrokerController brokerController;
 
+    // 创建Broker2Client对象
     public Broker2Client(BrokerController brokerController) {
         this.brokerController = brokerController;
     }
 
+    // 检查生产者事务状态
     public void checkProducerTransactionState(
         final Channel channel,
         final CheckTransactionStateRequestHeader requestHeader,
         final SelectMappedBufferResult selectMappedBufferResult) {
-        RemotingCommand request =
+        
+    	RemotingCommand request =
             RemotingCommand.createRequestCommand(RequestCode.CHECK_TRANSACTION_STATE, requestHeader);
-        request.markOnewayRPC();
+        // 标识为ONE_WAY模式
+    	request.markOnewayRPC();
 
         try {
             FileRegion fileRegion =
                 new OneMessageTransfer(request.encodeHeader(selectMappedBufferResult.getSize()),
                     selectMappedBufferResult);
+            // 将FileRegin数据写入到Channel对象中
             channel.writeAndFlush(fileRegion).addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
-                    selectMappedBufferResult.release();
+                    // 释放SelectMappedBufferResult对象
+                	selectMappedBufferResult.release();
                     if (!future.isSuccess()) {
                         log.error("invokeProducer failed,", future.cause());
                     }
@@ -88,40 +94,51 @@ public class Broker2Client {
         }
     }
 
+    // 向Channel中发出同步请求,超时时间为10s
     public RemotingCommand callClient(final Channel channel,
         final RemotingCommand request
     ) throws RemotingSendRequestException, RemotingTimeoutException, InterruptedException {
-        return this.brokerController.getRemotingServer().invokeSync(channel, request, 10000);
+        // 获取响应报文(同步发送)
+    	return this.brokerController.getRemotingServer().invokeSync(channel, request, 10000);
     }
 
+    // 向同消费组group下的Channel对象发送消费组成员发生变化
     public void notifyConsumerIdsChanged(
         final Channel channel,
         final String consumerGroup) {
+    	
         if (null == consumerGroup) {
             log.error("notifyConsumerIdsChanged consumerGroup is null");
             return;
         }
 
         NotifyConsumerIdsChangedRequestHeader requestHeader = new NotifyConsumerIdsChangedRequestHeader();
+        
+        // 设置消费组
         requestHeader.setConsumerGroup(consumerGroup);
+        
         RemotingCommand request =
             RemotingCommand.createRequestCommand(RequestCode.NOTIFY_CONSUMER_IDS_CHANGED, requestHeader);
 
         try {
+        	// 只管向channel发送响应报文
             this.brokerController.getRemotingServer().invokeOneway(channel, request, 10);
         } catch (Exception e) {
             log.error("notifyConsumerIdsChanged exception, " + consumerGroup, e.getMessage());
         }
     }
 
+    // 重置索引
     public RemotingCommand resetOffset(String topic, String group, long timeStamp, boolean isForce) {
         return resetOffset(topic, group, timeStamp, isForce, false);
     }
 
+    // 它是向同一消费组下的Channel对象写入topic下的消息在timeStamp时间戳时所对应的消息在commitLog中的偏移量
     public RemotingCommand resetOffset(String topic, String group, long timeStamp, boolean isForce,
         boolean isC) {
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
 
+        // 获取Topic下的topicConfig对象
         TopicConfig topicConfig = this.brokerController.getTopicConfigManager().selectTopicConfig(topic);
         if (null == topicConfig) {
             log.error("[reset-offset] reset offset failed, no topic in this broker. topic={}", topic);
@@ -138,17 +155,20 @@ public class Broker2Client {
             mq.setTopic(topic);
             mq.setQueueId(i);
 
+            // 获取消费组group中对象对每个队列的消息偏移量
             long consumerOffset =
                 this.brokerController.getConsumerOffsetManager().queryOffset(group, topic, i);
+            
             if (-1 == consumerOffset) {
+            	// 系统错误
                 response.setCode(ResponseCode.SYSTEM_ERROR);
                 response.setRemark(String.format("THe consumer group <%s> not exist", group));
                 return response;
             }
 
             long timeStampOffset;
+            // 获取指定时间戳的消息在commitLog中的偏移量
             if (timeStamp == -1) {
-
                 timeStampOffset = this.brokerController.getMessageStore().getMaxOffsetInQueue(topic, i);
             } else {
                 timeStampOffset = this.brokerController.getMessageStore().getOffsetInQueueByTime(topic, i, timeStamp);
@@ -159,6 +179,7 @@ public class Broker2Client {
                 timeStampOffset = 0;
             }
 
+            // true : timeStampOffset < consumerOffset
             if (isForce || timeStampOffset < consumerOffset) {
                 offsetTable.put(mq, timeStampOffset);
             } else {
@@ -166,12 +187,15 @@ public class Broker2Client {
             }
         }
 
+        // 创建请求报文数据
         ResetOffsetRequestHeader requestHeader = new ResetOffsetRequestHeader();
         requestHeader.setTopic(topic);
         requestHeader.setGroup(group);
         requestHeader.setTimestamp(timeStamp);
         RemotingCommand request =
             RemotingCommand.createRequestCommand(RequestCode.RESET_CONSUMER_CLIENT_OFFSET, requestHeader);
+        
+        // java | c++
         if (isC) {
             // c++ language
             ResetOffsetBodyForC body = new ResetOffsetBodyForC();
@@ -188,11 +212,13 @@ public class Broker2Client {
         ConsumerGroupInfo consumerGroupInfo =
             this.brokerController.getConsumerManager().getConsumerGroupInfo(group);
 
+        // 向group下的所有Channel对象中写入ResetOffsetRequestHeader对象
         if (consumerGroupInfo != null && !consumerGroupInfo.getAllChannel().isEmpty()) {
             ConcurrentMap<Channel, ClientChannelInfo> channelInfoTable =
                 consumerGroupInfo.getChannelInfoTable();
             for (Map.Entry<Channel, ClientChannelInfo> entry : channelInfoTable.entrySet()) {
                 int version = entry.getValue().getVersion();
+                // true : 3.0.7
                 if (version >= MQVersion.Version.V3_0_7_SNAPSHOT.ordinal()) {
                     try {
                         this.brokerController.getRemotingServer().invokeOneway(entry.getKey(), request, 5000);
@@ -222,6 +248,7 @@ public class Broker2Client {
             response.setRemark(errorInfo);
             return response;
         }
+        
         response.setCode(ResponseCode.SUCCESS);
         ResetOffsetBody resBody = new ResetOffsetBody();
         resBody.setOffsetTable(offsetTable);
@@ -229,6 +256,7 @@ public class Broker2Client {
         return response;
     }
 
+    // 返回List<MessageQueueForC>对象
     private List<MessageQueueForC> convertOffsetTable2OffsetList(Map<MessageQueue, Long> table) {
         List<MessageQueueForC> list = new ArrayList<>();
         for (Entry<MessageQueue, Long> entry : table.entrySet()) {
@@ -240,6 +268,7 @@ public class Broker2Client {
         return list;
     }
 
+    // 另一客户端发送请求, 经过Broker服务器获取originClientId客户端的消息状态
     public RemotingCommand getConsumeStatus(String topic, String group, String originClientId) {
         final RemotingCommand result = RemotingCommand.createResponseCommand(null);
 
@@ -254,6 +283,7 @@ public class Broker2Client {
             new HashMap<String, Map<MessageQueue, Long>>();
         ConcurrentMap<Channel, ClientChannelInfo> channelInfoTable =
             this.brokerController.getConsumerManager().getConsumerGroupInfo(group).getChannelInfoTable();
+        
         if (null == channelInfoTable || channelInfoTable.isEmpty()) {
             result.setCode(ResponseCode.SYSTEM_ERROR);
             result.setRemark(String.format("No Any Consumer online in the consumer group: [%s]", group));
@@ -263,6 +293,7 @@ public class Broker2Client {
         for (Map.Entry<Channel, ClientChannelInfo> entry : channelInfoTable.entrySet()) {
             int version = entry.getValue().getVersion();
             String clientId = entry.getValue().getClientId();
+            
             if (version < MQVersion.Version.V3_0_7_SNAPSHOT.ordinal()) {
                 result.setCode(ResponseCode.SYSTEM_ERROR);
                 result.setRemark("the client does not support this feature. version="
