@@ -51,6 +51,7 @@ public class ConsumerFilterData {
     // 死亡时间
     private long deadTime = 0;
     
+    // 它是group@topic字符串哈希算法完成的int[]数组
     private BloomFilterData bloomFilterData;
     
     // 客户端版本
