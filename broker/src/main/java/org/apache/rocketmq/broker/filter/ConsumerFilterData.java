@@ -33,19 +33,26 @@ public class ConsumerFilterData {
 
 	// 消费组名称
     private String consumerGroup;
+    
     // Topic名称
     private String topic;
     
+    // 设置表达式字符串
     private String expression;
+    
+    // 表达式字符串类型 : TAG 或  SQL92 或 ClassFilter
     private String expressionType;
     
     private transient Expression compiledExpression;
+    
     // 创建时间
     private long bornTime;
     
     // 死亡时间
     private long deadTime = 0;
+    
     private BloomFilterData bloomFilterData;
+    
     // 客户端版本
     private long clientVersion;
 
