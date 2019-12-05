@@ -31,7 +31,9 @@ import org.apache.rocketmq.store.PutMessageResult;
 import org.apache.rocketmq.store.QueryMessageResult;
 import org.apache.rocketmq.store.SelectMappedBufferResult;
 
+// 它持有对MessageStore对象的引用,委托模式
 public abstract class AbstractPluginMessageStore implements MessageStore {
+	
     protected MessageStore next = null;
     protected MessageStorePluginContext context;
 
