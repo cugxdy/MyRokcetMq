@@ -32,7 +32,7 @@ public class NotifyMessageArrivingListener implements MessageArrivingListener {
     public void arriving(String topic, int queueId, long logicOffset, long tagsCode,
         long msgStoreTime, byte[] filterBitMap, Map<String, String> properties) {
     	
-    	// 消息PutMessage被调用, 
+    	// 消息PutMessage被调用, 主服务器主动向客户端推送消息
         this.pullRequestHoldService.notifyMessageArriving(topic, queueId, logicOffset, tagsCode,
             msgStoreTime, filterBitMap, properties);
     }
