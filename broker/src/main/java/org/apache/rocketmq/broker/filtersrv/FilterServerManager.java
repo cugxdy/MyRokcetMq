@@ -37,25 +37,32 @@ import org.slf4j.LoggerFactory;
 
 public class FilterServerManager {
 
+	// filterService最大空闲时间戳
     public static final long FILTER_SERVER_MAX_IDLE_TIME_MILLS = 30000;
     private static final Logger log = LoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
+    
     private final ConcurrentMap<Channel, FilterServerInfo> filterServerTable =
         new ConcurrentHashMap<Channel, FilterServerInfo>(16);
+    
     private final BrokerController brokerController;
 
+    // 定时服务线程池
     private ScheduledExecutorService scheduledExecutorService = Executors
         .newSingleThreadScheduledExecutor(new ThreadFactoryImpl("FilterServerManagerScheduledThread"));
 
+    // 创建FilterServerManager对象
     public FilterServerManager(final BrokerController brokerController) {
         this.brokerController = brokerController;
     }
 
     public void start() {
 
+    	// 定时任务, 5s启动, 30s周期
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 try {
+                	// 创建过滤服务器
                     FilterServerManager.this.createFilterServer();
                 } catch (Exception e) {
                     log.error("", e);
@@ -64,40 +71,54 @@ public class FilterServerManager {
         }, 1000 * 5, 1000 * 30, TimeUnit.MILLISECONDS);
     }
 
+    // 创建filterServer服务
     public void createFilterServer() {
+    	// 获取过滤服务器地址
         int more =
             this.brokerController.getBrokerConfig().getFilterServerNums() - this.filterServerTable.size();
+        
+        // 创建cmd中命令形式
+        // start ...
         String cmd = this.buildStartCommand();
+        
         for (int i = 0; i < more; i++) {
+        	// 使用java Process类,创建进程对象
             FilterServerUtil.callShell(cmd, log);
         }
     }
 
+    // sh /bin/startfsrv.sh -c configFile -n namesrvAddr; 
     private String buildStartCommand() {
         String config = "";
+        // 获取配置的config文件
         if (BrokerStartup.configFile != null) {
             config = String.format("-c %s", BrokerStartup.configFile);
         }
 
+        // 配置namesrv服务地址
         if (this.brokerController.getBrokerConfig().getNamesrvAddr() != null) {
             config += String.format(" -n %s", this.brokerController.getBrokerConfig().getNamesrvAddr());
         }
 
         if (RemotingUtil.isWindowsPlatform()) {
+        	// window下,使用start mqfiltersrv.exe命令
             return String.format("start /b %s\\bin\\mqfiltersrv.exe %s",
                 this.brokerController.getBrokerConfig().getRocketmqHome(),
                 config);
         } else {
+        	// linux平台下,使用sh startsrv.sh命令
             return String.format("sh %s/bin/startfsrv.sh %s",
                 this.brokerController.getBrokerConfig().getRocketmqHome(),
                 config);
         }
     }
 
+    // shutdown定时服务
     public void shutdown() {
         this.scheduledExecutorService.shutdown();
     }
 
+    // 向filterServerTable中写入FilterServerInfo对象
     public void registerFilterServer(final Channel channel, final String filterServerAddr) {
         FilterServerInfo filterServerInfo = this.filterServerTable.get(channel);
         if (filterServerInfo != null) {
@@ -111,6 +132,7 @@ public class FilterServerManager {
         }
     }
 
+    // 定时去删除无效Channel对象(即长时间未响应的Channel对象)
     public void scanNotActiveChannel() {
 
         Iterator<Entry<Channel, FilterServerInfo>> it = this.filterServerTable.entrySet().iterator();
@@ -118,6 +140,8 @@ public class FilterServerManager {
             Entry<Channel, FilterServerInfo> next = it.next();
             long timestamp = next.getValue().getLastUpdateTimestamp();
             Channel channel = next.getKey();
+            
+            // 判断空闲时间是否大于30s, 在30s内Broker与filter服务器未存储信息交互时
             if ((System.currentTimeMillis() - timestamp) > FILTER_SERVER_MAX_IDLE_TIME_MILLS) {
                 log.info("The Filter Server<{}> expired, remove it", next.getKey());
                 it.remove();
@@ -126,7 +150,9 @@ public class FilterServerManager {
         }
     }
 
+    // 处理Channel Close事件
     public void doChannelCloseEvent(final String remoteAddr, final Channel channel) {
+    	// 删除channel对象
         FilterServerInfo old = this.filterServerTable.remove(channel);
         if (old != null) {
             log.warn("The Filter Server<{}> connection<{}> closed, remove it", old.getFilterServerAddr(),
@@ -134,6 +160,7 @@ public class FilterServerManager {
         }
     }
 
+    // 获取所有的过滤服务器地址List对象(String)
     public List<String> buildNewFilterServerList() {
         List<String> addr = new ArrayList<>();
         Iterator<Entry<Channel, FilterServerInfo>> it = this.filterServerTable.entrySet().iterator();
@@ -144,8 +171,13 @@ public class FilterServerManager {
         return addr;
     }
 
+    // 过滤服务器信息(filterServiceInfo)
     static class FilterServerInfo {
+    	
+    	// 过滤服务地址
         private String filterServerAddr;
+        
+        // 最新更新时间戳
         private long lastUpdateTimestamp;
 
         public String getFilterServerAddr() {
