@@ -29,7 +29,10 @@ public class BloomFilter {
     public static final Charset UTF_8 = Charset.forName("UTF-8");
 
     // as error rate, 10/100 = 0.1
+    // defult = 20
     private int f = 10;
+    
+    // defult = 32
     private int n = 128;
 
     // hash function num, by calculation.
@@ -57,6 +60,7 @@ public class BloomFilter {
      * @param f error rate
      * @param n num will mapping to bit
      */
+    // 私有构造函数
     private BloomFilter(int f, int n) {
     	// 验证输入参数
         if (f < 1 || f >= 100) {
@@ -73,7 +77,8 @@ public class BloomFilter {
         // f = (1 - p)^k = e^(kln(1-p))
         // when p = 0.5, k = ln2 * (m/n), f = (1/2)^k = (0.618)^(m/n)
         double errorRate = f / 100.0;
-        // ceil: 返回大于或者等于指定表达式的最小整数
+        
+        // ceil: 返回大于或者等于指定表达式的最小整数(向上取整)
         this.k = (int) Math.ceil(logMN(0.5, errorRate));
 
         if (this.k < 1) {
@@ -93,25 +98,27 @@ public class BloomFilter {
      * Mitzenmacher.
      * </p>
      */
-    // 计算存储位置
+    // 计算murmur3_128哈希算法存储位置.将字符串str转换成int类型数组
     public int[] calcBitPositions(String str) {
         int[] bitPositions = new int[this.k];
 
-        // 哈希计算值
+        // 哈希计算值 (google提供的哈希函数)
         long hash64 = Hashing.murmur3_128().hashString(str, UTF_8).asLong();
 
-        int hash1 = (int) hash64;
-        int hash2 = (int) (hash64 >>> 32);
+        int hash1 = (int) hash64;  // 低32位
+        
+        int hash2 = (int) (hash64 >>> 32); // 高32位
 
         for (int i = 1; i <= this.k; i++) {
         	// 计算哈希值
             int combinedHash = hash1 + (i * hash2);
             // Flip all the bits if it's negative (guaranteed positive number)
+            
             if (combinedHash < 0) {
             	// -124 = 123 ; - 453 = 452
                 combinedHash = ~combinedHash;
             }
-            // 设置存储位置
+            // 设置存储位置(取模获取索引号)
             bitPositions[i - 1] = combinedHash % this.m;
         }
 
@@ -142,6 +149,7 @@ public class BloomFilter {
     public void hashTo(int[] bitPositions, BitsArray bits) {
         check(bits);
 
+        // i并非为索引号,而是bitPositions元素值
         for (int i : bitPositions) {
             bits.setBit(i, true);
         }
@@ -183,6 +191,7 @@ public class BloomFilter {
     // 判断指定位置上的索引是否均为1
     public boolean isHit(int[] bitPositions, BitsArray bits) {
         check(bits);
+        // 进行布隆过滤器实现
         boolean ret = bits.getBit(bitPositions[0]);
         for (int i = 1; i < bitPositions.length; i++) {
             ret &= bits.getBit(bitPositions[i]);
@@ -227,6 +236,7 @@ public class BloomFilter {
 
     // 检查字节数组是否等于所需要的字节数组长度
     protected void check(BitsArray bits) {
+    	// 字节数组并非BloomFilter.m时,抛出异常
         if (bits.bitLength() != this.m) {
             throw new IllegalArgumentException(
                 String.format("Length(%d) of bits in BitsArray is not equal to %d!", bits.bitLength(), this.m)
