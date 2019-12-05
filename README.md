@@ -6,9 +6,12 @@
 #### 软件架构
 1、基于reactor模式的实现, 利用java nio中selector对象
 详情请看pdf: https://cugxdy.oss-cn-beijing.aliyuncs.com/java/nio.pdf<br/>
-2、MappFile对象提交与刷新流程图:
+2、配置参数 : <br/>
+&emsp;1、enableConsumeQueueExt : 决定是否启用TransientStorePool对象<br/>
+3、MappFile对象提交与刷新流程图:
 ![Image text](https://cugxdy.oss-cn-beijing.aliyuncs.com/picture/ONUO5%28PY3_%7B%7D1DSK%25M62G47.png)<br/>
-
+4、TopicConfigManager对象:
+![Image text](https://cugxdy.oss-cn-beijing.aliyuncs.com/picture/9M%7B%7EXMBH5LC%7DL3SDB%2830_AR.png)<br/>
 #### 安装教程
 
 1. xxxx
