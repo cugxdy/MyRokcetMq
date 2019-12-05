@@ -30,24 +30,31 @@ import java.util.Map;
  * Support filter to retry topic.
  * <br>It will decode properties first in order to get real topic.
  */
+// 支持对重试主题的过滤
 public class ExpressionForRetryMessageFilter extends ExpressionMessageFilter {
-    public ExpressionForRetryMessageFilter(SubscriptionData subscriptionData, ConsumerFilterData consumerFilterData,
+    
+	// 创建ExpressionForRetryMessageFilter对象
+	public ExpressionForRetryMessageFilter(SubscriptionData subscriptionData, ConsumerFilterData consumerFilterData,
         ConsumerFilterManager consumerFilterManager) {
         super(subscriptionData, consumerFilterData, consumerFilterManager);
     }
 
     @Override
     public boolean isMatchedByCommitLog(ByteBuffer msgBuffer, Map<String, String> properties) {
-        if (subscriptionData == null) {
+        // true : 订阅组为null
+    	if (subscriptionData == null) {
             return true;
         }
 
+    	// classFilterMode = true
         if (subscriptionData.isClassFilterMode()) {
             return true;
         }
 
+        // 判断topic是否以RETRY为前缀
         boolean isRetryTopic = subscriptionData.getTopic().startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX);
 
+        // true : tag | null
         if (!isRetryTopic && ExpressionType.isTagType(subscriptionData.getExpressionType())) {
             return true;
         }
@@ -62,17 +69,23 @@ public class ExpressionForRetryMessageFilter extends ExpressionMessageFilter {
                 decoded = true;
                 tempProperties = MessageDecoder.decodeProperties(msgBuffer);
             }
+            // 获取topic字符串
             String realTopic = tempProperties.get(MessageConst.PROPERTY_RETRY_TOPIC);
+            // 获取group字符串
             String group = subscriptionData.getTopic().substring(MixAll.RETRY_GROUP_TOPIC_PREFIX.length());
+            
+            // 获取ConsumerFilterData对象
             realFilterData = this.consumerFilterManager.get(realTopic, group);
         }
 
         // no expression
+        // true : expression == null
         if (realFilterData == null || realFilterData.getExpression() == null
             || realFilterData.getCompiledExpression() == null) {
             return true;
         }
 
+        // 获取message中的properties属性Map对象
         if (!decoded && tempProperties == null && msgBuffer != null) {
             tempProperties = MessageDecoder.decodeProperties(msgBuffer);
         }
@@ -81,6 +94,7 @@ public class ExpressionForRetryMessageFilter extends ExpressionMessageFilter {
         try {
             MessageEvaluationContext context = new MessageEvaluationContext(tempProperties);
 
+            // 使用JAVA CC编译表达式
             ret = realFilterData.getCompiledExpression().evaluate(context);
         } catch (Throwable e) {
             log.error("Message Filter error, " + realFilterData + ", " + tempProperties, e);
