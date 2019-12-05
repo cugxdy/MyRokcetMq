@@ -37,19 +37,25 @@ public class BitsArray implements Cloneable {
         return new BitsArray(bytes);
     }
 
+    // 创建BitsArray对象
     private BitsArray(int bitLength) {
         this.bitLength = bitLength;
-        // init bytes
+        // init bytes 除以8商数
         int temp = bitLength / Byte.SIZE;
+        // 除以8余数不为0
         if (bitLength % Byte.SIZE > 0) {
-            temp++;
+            temp++; // 递增一个字节数
         }
+        
+        // 创建字节数组
         bytes = new byte[temp];
         for (int i = 0; i < bytes.length; i++) {
+        	// 初始化为0
             bytes[i] = (byte) 0x00;
         }
     }
 
+    // 创建BitsArray字节数组对象啊
     private BitsArray(byte[] bytes, int bitLength) {
         if (bytes == null || bytes.length < 1) {
             throw new IllegalArgumentException("Bytes is empty!");
@@ -63,40 +69,55 @@ public class BitsArray implements Cloneable {
             throw new IllegalArgumentException("BitLength is less than bytes.length() * " + Byte.SIZE);
         }
 
+        // 记录字节数组长度
         this.bytes = new byte[bytes.length];
+        // 数组copy
         System.arraycopy(bytes, 0, this.bytes, 0, this.bytes.length);
+        
+        // 记录比特位长度
         this.bitLength = bitLength;
     }
 
+    // 创建BitArray对象
     private BitsArray(byte[] bytes) {
         if (bytes == null || bytes.length < 1) {
             throw new IllegalArgumentException("Bytes is empty!");
         }
 
+        // 记录比特位长度与字节数组长度
         this.bitLength = bytes.length * Byte.SIZE;
         this.bytes = new byte[bytes.length];
+        
+        // 数组copy
         System.arraycopy(bytes, 0, this.bytes, 0, this.bytes.length);
     }
 
+    // 获取比特长度
     public int bitLength() {
         return this.bitLength;
     }
 
+    // 获取字节数组长度
     public int byteLength() {
         return this.bytes.length;
     }
 
+    // 获取字节数组
     public byte[] bytes() {
         return this.bytes;
     }
 
+    // 将两个BitsArray字节数的比特位进行异或运算
     public void xor(final BitsArray other) {
         checkInitialized(this);
         checkInitialized(other);
 
+        // 获取两者数组之间的最小值
         int minByteLength = Math.min(this.byteLength(), other.byteLength());
 
         for (int i = 0; i < minByteLength; i++) {
+        	// 1 1 = 0 ; 1 0 = 1 ; 0 0 = 0
+        	// 异或运算
             this.bytes[i] = (byte) (this.bytes[i] ^ other.getByte(i));
         }
     }
@@ -104,21 +125,26 @@ public class BitsArray implements Cloneable {
     public void xor(int bitPos, boolean set) {
         checkBitPosition(bitPos, this);
 
+        // 获取bitPos位置上的是0: false 1: true
         boolean value = getBit(bitPos);
-        if (value ^ set) {
-            setBit(bitPos, true);
+        
+        if (value ^ set) { // 异或为true
+            setBit(bitPos, true); // 设置为 1
         } else {
-            setBit(bitPos, false);
+            setBit(bitPos, false); // 位置为0
         }
     }
 
+    // 将两个BitsArray字节数的比特位进行或运算
     public void or(final BitsArray other) {
         checkInitialized(this);
         checkInitialized(other);
 
+        // 获取两者数组长度的最小值
         int minByteLength = Math.min(this.byteLength(), other.byteLength());
 
         for (int i = 0; i < minByteLength; i++) {
+        	// 将相应索引上的字节进行或运算
             this.bytes[i] = (byte) (this.bytes[i] | other.getByte(i));
         }
     }
@@ -127,17 +153,21 @@ public class BitsArray implements Cloneable {
         checkBitPosition(bitPos, this);
 
         if (set) {
+        	// true,将bitPos比特位上设置为 1
             setBit(bitPos, true);
         }
     }
 
+    // 将两个BitsArray字节数的比特位进行与运算
     public void and(final BitsArray other) {
         checkInitialized(this);
         checkInitialized(other);
 
+        // 获取两者数组长度之间的最小值
         int minByteLength = Math.min(this.byteLength(), other.byteLength());
 
         for (int i = 0; i < minByteLength; i++) {
+        	// 将两者数组索引号的字节进行与运算
             this.bytes[i] = (byte) (this.bytes[i] & other.getByte(i));
         }
     }
@@ -150,6 +180,7 @@ public class BitsArray implements Cloneable {
         }
     }
 
+    // 对相应字节数的数组进行非运算
     public void not(int bitPos) {
         checkBitPosition(bitPos, this);
 
@@ -157,36 +188,45 @@ public class BitsArray implements Cloneable {
     }
 
     public void setBit(int bitPos, boolean set) {
+    	// 检查bitPos、this对象有效性
         checkBitPosition(bitPos, this);
+        
+        // bitPos除以8的商数
         int sub = subscript(bitPos);
+        // bitPos除以8的余数
         int pos = position(bitPos);
+        
         if (set) {
+        	// 在相应bit位上设置为1
             this.bytes[sub] = (byte) (this.bytes[sub] | pos);
         } else {
+        	// 在相应bit位上设置为0
             this.bytes[sub] = (byte) (this.bytes[sub] & ~pos);
         }
     }
 
     public void setByte(int bytePos, byte set) {
         checkBytePosition(bytePos, this);
-
+        
+        // 设置字节数组
         this.bytes[bytePos] = set;
     }
 
-    // = 0 : true   = 1 : false
+    // = 0 : false   = 1 : true
     public boolean getBit(int bitPos) {
         checkBitPosition(bitPos, this);
 
         return (this.bytes[subscript(bitPos)] & position(bitPos)) != 0;
     }
 
+    // 获取bytePos上的字节数据
     public byte getByte(int bytePos) {
         checkBytePosition(bytePos, this);
 
         return this.bytes[bytePos];
     }
 
-    // 判断索引为分配在那个字节上
+    // 判断索引为分配在那个字节(除以8的商数)上
     protected int subscript(int bitPos) {
         return bitPos / Byte.SIZE;
     }
@@ -236,7 +276,7 @@ public class BitsArray implements Cloneable {
         return create(clone, bitLength());
     }
 
-    @Override
+    @Override // 返回String对象
     public String toString() {
         if (this.bytes == null) {
             return "null";
