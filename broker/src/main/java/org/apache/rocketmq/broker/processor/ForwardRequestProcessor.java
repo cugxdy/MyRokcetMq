@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 public class ForwardRequestProcessor implements NettyRequestProcessor {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
 
+    // Broker服务器控制器对象
     private final BrokerController brokerController;
 
     public ForwardRequestProcessor(final BrokerController brokerController) {
