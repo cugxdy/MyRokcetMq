@@ -21,5 +21,6 @@ import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageQueue;
 
 public interface MessageQueueSelector {
+	// 以特定的选择模式,去选择msg需要至的MessageQueue对象
     MessageQueue select(final List<MessageQueue> mqs, final Message msg, final Object arg);
 }
