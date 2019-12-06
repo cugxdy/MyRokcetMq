@@ -25,17 +25,27 @@ import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.common.message.MessageType;
 
 public class SendMessageContext {
-    private String producerGroup;
-    private Message message;
-    private MessageQueue mq;
-    private String brokerAddr;
-    private String bornHost;
-    private CommunicationMode communicationMode;
-    private SendResult sendResult;
-    private Exception exception;
+    private String producerGroup; // 生产者组名称
+    
+    private Message message; // 消息对象
+    private MessageQueue mq; // 消息队列对象
+    
+    private String brokerAddr;  // 设置Broker服务器地址
+    
+    private String bornHost; // 消息BronIp地址
+    
+    private CommunicationMode communicationMode; // 通信模式: sync | async | oneway
+    
+    private SendResult sendResult; // sendMessage成功后根据响应报文创建的结果对象
+    
+    private Exception exception; // 异常对象
     private Object mqTraceContext;
+    
+    // 
     private Map<String, String> props;
-    private DefaultMQProducerImpl producer;
+    
+    private DefaultMQProducerImpl producer; // 生成者对象
+    
     private MessageType msgType = MessageType.Normal_Msg;
 
     public MessageType getMsgType() {
