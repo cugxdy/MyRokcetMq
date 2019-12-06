@@ -22,12 +22,14 @@ import org.apache.rocketmq.client.producer.MessageQueueSelector;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageQueue;
 
+// 使用随机数去获取MessageQueue对象
 public class SelectMessageQueueByRandom implements MessageQueueSelector {
     private Random random = new Random(System.currentTimeMillis());
 
     @Override
     public MessageQueue select(List<MessageQueue> mqs, Message msg, Object arg) {
-        int value = random.nextInt(mqs.size());
+        // 获取size下的随机数
+    	int value = random.nextInt(mqs.size());
         return mqs.get(value);
     }
 }
