@@ -25,28 +25,40 @@ import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.annotation.CFNullable;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 向Broker服务器发起PullMessage请求报文数据
 public class PullMessageRequestHeader implements CommandCustomHeader {
+    
+	@CFNotNull
+    private String consumerGroup; // 消费组名称
+    
     @CFNotNull
-    private String consumerGroup;
+    private String topic; // topic名称
+    
     @CFNotNull
-    private String topic;
+    private Integer queueId; // 队列Id
+    
     @CFNotNull
-    private Integer queueId;
+    private Long queueOffset; // consumeQueueOffset
+    
     @CFNotNull
-    private Long queueOffset;
+    private Integer maxMsgNums; // 消息最大数目
+    
     @CFNotNull
-    private Integer maxMsgNums;
+    private Integer sysFlag; // 标识Flag
+    
     @CFNotNull
-    private Integer sysFlag;
+    private Long commitOffset; // 需向consumerOffset中提交的索引号
+    
     @CFNotNull
-    private Long commitOffset;
-    @CFNotNull
-    private Long suspendTimeoutMillis;
+    private Long suspendTimeoutMillis;  // 暂停超时时间戳
+    
     @CFNullable
-    private String subscription;
+    private String subscription; // 订阅字符串 (AAA || BBB ; a in (0,9))
+    
     @CFNotNull
-    private Long subVersion;
-    private String expressionType;
+    private Long subVersion; // 版本号
+    
+    private String expressionType; // 表达式类型(TAG | SQL92)
 
     @Override
     public void checkFields() throws RemotingCommandException {
