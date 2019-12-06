@@ -26,25 +26,32 @@ import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.annotation.CFNullable;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// stop transaction事务状态请求数据
 public class EndTransactionRequestHeader implements CommandCustomHeader {
+    
+	@CFNotNull
+    private String producerGroup; // 生产者组名称
+    
     @CFNotNull
-    private String producerGroup;
+    private Long tranStateTableOffset; // consumeQueueOffset
+    
     @CFNotNull
-    private Long tranStateTableOffset;
+    private Long commitLogOffset; // commitLogOffset
+    
     @CFNotNull
-    private Long commitLogOffset;
-    @CFNotNull
-    private Integer commitOrRollback; // TRANSACTION_COMMIT_TYPE
+    private Integer commitOrRollback;  // commit | rollback
+    
+    // TRANSACTION_COMMIT_TYPE
     // TRANSACTION_ROLLBACK_TYPE
     // TRANSACTION_NOT_TYPE
 
-    @CFNullable
+    @CFNullable // 是否检查该对象的事务状态
     private Boolean fromTransactionCheck = false;
 
     @CFNotNull
-    private String msgId;
+    private String msgId; // 消息Id
 
-    private String transactionId;
+    private String transactionId; // 事务Id
 
     @Override
     public void checkFields() throws RemotingCommandException {
