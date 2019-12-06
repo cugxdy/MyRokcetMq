@@ -25,7 +25,7 @@ import org.apache.rocketmq.common.message.MessageQueue;
 public class SelectMessageQueueByMachineRoom implements MessageQueueSelector {
     private Set<String> consumeridcs;
 
-    @Override
+    @Override // 其实什么都没做
     public MessageQueue select(List<MessageQueue> mqs, Message msg, Object arg) {
         return null;
     }
