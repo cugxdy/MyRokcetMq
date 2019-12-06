@@ -24,15 +24,20 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是Broker服务器向客户端
 public class PullMessageResponseHeader implements CommandCustomHeader {
+	
     @CFNotNull
-    private Long suggestWhichBrokerId;
+    private Long suggestWhichBrokerId; // 下一次pull建议从哪个Broker服务器获取消息
+    
     @CFNotNull
-    private Long nextBeginOffset;
+    private Long nextBeginOffset; // 下一次pull建议consumeQueue索引
+    
     @CFNotNull
-    private Long minOffset;
+    private Long minOffset; // consumeQueue最小索引
+    
     @CFNotNull
-    private Long maxOffset;
+    private Long maxOffset; // consumeQueue最大索引
 
     @Override
     public void checkFields() throws RemotingCommandException {
