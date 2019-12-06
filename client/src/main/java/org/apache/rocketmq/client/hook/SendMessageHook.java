@@ -16,6 +16,7 @@
  */
 package org.apache.rocketmq.client.hook;
 
+// 发送消息Hook对象,前置处理器与后置处理器
 public interface SendMessageHook {
     String hookName();
 
