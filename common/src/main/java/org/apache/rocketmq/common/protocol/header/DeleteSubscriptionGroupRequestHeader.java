@@ -21,9 +21,11 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是删除SubscriptionGroup配置对象请求头对象
 public class DeleteSubscriptionGroupRequestHeader implements CommandCustomHeader {
-    @CFNotNull
-    private String groupName;
+   
+	@CFNotNull
+    private String groupName; // 订阅组名称
 
     @Override
     public void checkFields() throws RemotingCommandException {
