@@ -22,8 +22,13 @@ import java.util.Map.Entry;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
+// 记录MessageQueue下的Broker偏移量, 用户实际消息ConsumerOffset偏移量
 public class ConsumeStats extends RemotingSerializable {
-    private HashMap<MessageQueue, OffsetWrapper> offsetTable = new HashMap<MessageQueue, OffsetWrapper>();
+	
+    // 记录MessageQueue下的Broker偏移量, 用户实际消息ConsumerOffset偏移量
+	private HashMap<MessageQueue, OffsetWrapper> offsetTable = new HashMap<MessageQueue, OffsetWrapper>();
+    
+    // 记录Topic-group下的Tps数值
     private double consumeTps = 0;
 
     // 计算偏移量
