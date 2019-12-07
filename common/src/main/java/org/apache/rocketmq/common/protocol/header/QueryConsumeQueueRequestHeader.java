@@ -20,13 +20,18 @@ package org.apache.rocketmq.common.protocol.header;
 import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是校验topic-queueId下的consumeQueue对象中以index为开始位置存储单元(单位:20字节)数据
 public class QueryConsumeQueueRequestHeader implements CommandCustomHeader {
 
-    private String topic;
-    private int queueId;
-    private long index;
-    private int count;
-    private String consumerGroup;
+    private String topic; // topic名称
+    
+    private int queueId; // 队列Id
+    
+    private long index; // consumeQueue索引号(单位: 20字节)
+    
+    private int count; // 需校验(过滤)消息计数
+    
+    private String consumerGroup; // 消费组名称
 
     public String getTopic() {
         return topic;
