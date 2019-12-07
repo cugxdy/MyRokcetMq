@@ -21,9 +21,11 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 获取Broker服务器下的topic下的MessageQueue对象的MaxOffset、MinOffset、NewMessAgeTime
 public class GetTopicStatsInfoRequestHeader implements CommandCustomHeader {
-    @CFNotNull
-    private String topic;
+    
+	@CFNotNull
+    private String topic; // topic名称
 
     @Override
     public void checkFields() throws RemotingCommandException {
