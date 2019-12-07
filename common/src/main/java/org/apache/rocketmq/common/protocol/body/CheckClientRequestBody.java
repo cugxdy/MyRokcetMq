@@ -20,11 +20,14 @@ package org.apache.rocketmq.common.protocol.body;
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
+// 它是向Broker服务器发送请求数据, 去校验SubscriptionData数据的有效性
 public class CheckClientRequestBody extends RemotingSerializable {
 
-    private String clientId;
-    private String group;
-    private SubscriptionData subscriptionData;
+    private String clientId; // 客户端Id
+    
+    private String group; // 客户端所属消费组
+    
+    private SubscriptionData subscriptionData; // 订阅组信息
 
     public String getClientId() {
         return clientId;
