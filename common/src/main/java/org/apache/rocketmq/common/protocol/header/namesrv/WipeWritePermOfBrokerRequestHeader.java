@@ -20,8 +20,10 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是取消namesrv服务器中QueueData写能力的请求报文数据
 public class WipeWritePermOfBrokerRequestHeader implements CommandCustomHeader {
-    @CFNotNull
+    
+	@CFNotNull
     private String brokerName;
 
     @Override
