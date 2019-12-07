@@ -20,10 +20,11 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是取消namesrv服务器QueueData写能力的响应报文数据
 public class WipeWritePermOfBrokerResponseHeader implements CommandCustomHeader {
     
 	@CFNotNull
-    private Integer wipeTopicCount; // 擦除Topic写计数器
+    private Integer wipeTopicCount; // 擦除Broker下的QueueData写计数器
 
     @Override
     public void checkFields() throws RemotingCommandException {
