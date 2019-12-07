@@ -24,15 +24,20 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 更新指定group-topic-queueId下的consumerOffset属性值(偏移量)
 public class UpdateConsumerOffsetRequestHeader implements CommandCustomHeader {
+    
+	@CFNotNull
+    private String consumerGroup; // 消费组名称
+	
     @CFNotNull
-    private String consumerGroup;
+    private String topic; // topic名称
+    
     @CFNotNull
-    private String topic;
+    private Integer queueId; // 队列Id
+    
     @CFNotNull
-    private Integer queueId;
-    @CFNotNull
-    private Long commitOffset;
+    private Long commitOffset; // consumerOffset消费偏移量
 
     @Override
     public void checkFields() throws RemotingCommandException {
