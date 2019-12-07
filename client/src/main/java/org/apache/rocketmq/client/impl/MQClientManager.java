@@ -25,10 +25,15 @@ import org.apache.rocketmq.client.log.ClientLogger;
 import org.apache.rocketmq.remoting.RPCHook;
 import org.slf4j.Logger;
 
+// MQclient客户端管理对象, 饿汉单例模式
 public class MQClientManager {
     private final static Logger log = ClientLogger.getLog();
+    // MQClientManager实例对象
     private static MQClientManager instance = new MQClientManager();
+    // MQClientInstance计数器
     private AtomicInteger factoryIndexGenerator = new AtomicInteger();
+    
+    // MQClientInstance
     private ConcurrentMap<String/* clientId */, MQClientInstance> factoryTable =
         new ConcurrentHashMap<String, MQClientInstance>();
 
@@ -36,6 +41,7 @@ public class MQClientManager {
 
     }
 
+    // 获取唯一实例
     public static MQClientManager getInstance() {
         return instance;
     }
@@ -44,11 +50,14 @@ public class MQClientManager {
         return getAndCreateMQClientInstance(clientConfig, null);
     }
 
+    // 在同一JVM进程中只存在MQClientInstance对象
     public MQClientInstance getAndCreateMQClientInstance(final ClientConfig clientConfig, RPCHook rpcHook) {
-        String clientId = clientConfig.buildMQClientId();
+        // 获取ClientId字符串对象
+    	String clientId = clientConfig.buildMQClientId();
         MQClientInstance instance = this.factoryTable.get(clientId);
         if (null == instance) {
-            instance =
+            // 创建MQClientInstance对象
+        	instance =
                 new MQClientInstance(clientConfig.cloneClientConfig(),
                     this.factoryIndexGenerator.getAndIncrement(), clientId, rpcHook);
             MQClientInstance prev = this.factoryTable.putIfAbsent(clientId, instance);
@@ -60,6 +69,7 @@ public class MQClientManager {
             }
         }
 
+        // 返回MQClientInstance对象
         return instance;
     }
 
