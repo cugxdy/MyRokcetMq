@@ -24,9 +24,11 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 向Broker服务器查询ONE消息的请求报文数据
 public class ViewMessageRequestHeader implements CommandCustomHeader {
-    @CFNotNull
-    private Long offset;
+    
+	@CFNotNull
+    private Long offset; // commitLog偏移量
 
     @Override
     public void checkFields() throws RemotingCommandException {
