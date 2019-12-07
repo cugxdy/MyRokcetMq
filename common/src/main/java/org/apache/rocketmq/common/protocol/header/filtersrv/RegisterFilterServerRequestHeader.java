@@ -21,9 +21,11 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是向Broker服务器注册过滤服务器
 public class RegisterFilterServerRequestHeader implements CommandCustomHeader {
-    @CFNotNull
-    private String filterServerAddr;
+    
+	@CFNotNull
+    private String filterServerAddr; // 过滤服务器地址
 
     @Override
     public void checkFields() throws RemotingCommandException {
