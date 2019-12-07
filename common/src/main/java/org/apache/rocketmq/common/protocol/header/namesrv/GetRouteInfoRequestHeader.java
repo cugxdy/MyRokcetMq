@@ -24,8 +24,10 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是获取topic路由数据对象请求报文数据
 public class GetRouteInfoRequestHeader implements CommandCustomHeader {
-    @CFNotNull
+    
+	@CFNotNull
     private String topic; // Topic名称
 
     @Override
