@@ -23,11 +23,14 @@ import org.apache.rocketmq.common.DataVersion;
 import org.apache.rocketmq.common.TopicConfig;
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
+// 它是对TopicConfig集合封装对象
 public class TopicConfigSerializeWrapper extends RemotingSerializable {
-	// ConcurrentMap线程安全的Map类
+	
+	// ConcurrentMap线程安全的Map类记录topic - topicConfig关系
     private ConcurrentMap<String, TopicConfig> topicConfigTable =
         new ConcurrentHashMap<String, TopicConfig>();
     
+    // TopicConfigManager对象的数据版本
     private DataVersion dataVersion = new DataVersion();
 
     public ConcurrentMap<String, TopicConfig> getTopicConfigTable() {
