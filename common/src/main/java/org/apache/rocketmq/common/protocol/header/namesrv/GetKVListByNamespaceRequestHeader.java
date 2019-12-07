@@ -21,8 +21,10 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是在namesrv服务器上获取指定namespace下的K-V存储Map对象
 public class GetKVListByNamespaceRequestHeader implements CommandCustomHeader {
-    @CFNotNull
+    
+	@CFNotNull
     private String namespace;
 
     @Override
