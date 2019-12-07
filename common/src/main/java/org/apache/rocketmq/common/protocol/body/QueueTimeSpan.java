@@ -21,11 +21,20 @@ import java.util.Date;
 import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.message.MessageQueue;
 
+// 记录topic-group下的MessageQueue对象下的消费情况
 public class QueueTimeSpan {
+	
     private MessageQueue messageQueue;
+    
+    // 获取topic-queueId下的consumeQueue对象最早消息存储时间戳
     private long minTimeStamp;
+    // 获取topic-queueId下的consumeQueue对象最近消息存储时间戳
     private long maxTimeStamp;
+    
+    // 记录最近一个消费的消息在commitLog中的存储时间戳
     private long consumeTimeStamp;
+    
+    // 记录最新存储消息已过多久未被消费
     private long delayTime;
 
     public MessageQueue getMessageQueue() {
