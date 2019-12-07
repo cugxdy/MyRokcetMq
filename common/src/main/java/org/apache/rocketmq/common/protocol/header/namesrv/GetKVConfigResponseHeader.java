@@ -21,8 +21,10 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNullable;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是获取namesrv服务器上某namespace-key下的value对象响应报文数据
 public class GetKVConfigResponseHeader implements CommandCustomHeader {
-    @CFNullable
+    
+	@CFNullable
     private String value; // value对象
 
     @Override
