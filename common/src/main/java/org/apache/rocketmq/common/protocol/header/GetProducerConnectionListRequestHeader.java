@@ -21,9 +21,11 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 获取生产组下所有的连接对象(Connection)
 public class GetProducerConnectionListRequestHeader implements CommandCustomHeader {
-    @CFNotNull
-    private String producerGroup;
+    
+	@CFNotNull
+    private String producerGroup; // 生产者名称
 
     @Override
     public void checkFields() throws RemotingCommandException {
