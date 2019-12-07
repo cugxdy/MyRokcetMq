@@ -21,8 +21,10 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是获取指定消费组中的连接Connection对象请求报文数据
 public class GetConsumerConnectionListRequestHeader implements CommandCustomHeader {
-    @CFNotNull
+    
+	@CFNotNull
     private String consumerGroup;
 
     @Override
