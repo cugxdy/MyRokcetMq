@@ -24,13 +24,18 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是将Broker服务器上consumerOffsetManager对象中srcGroup索引复制至destGroup消费组中
 public class CloneGroupOffsetRequestHeader implements CommandCustomHeader {
+    
+	@CFNotNull
+    private String srcGroup; // 源消费组
+    
     @CFNotNull
-    private String srcGroup;
-    @CFNotNull
-    private String destGroup;
-    private String topic;
-    private boolean offline;
+    private String destGroup; // 目的消费组
+    
+    private String topic; // topic名称
+    
+    private boolean offline; // 下线状态(即判断srcGroup是否在线)
 
     @Override
     public void checkFields() throws RemotingCommandException {
