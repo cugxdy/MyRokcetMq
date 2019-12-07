@@ -24,9 +24,12 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是向Broker服务器发送删除Topic的请求报文数据
 public class DeleteTopicRequestHeader implements CommandCustomHeader {
+	
+	
     @CFNotNull
-    private String topic;
+    private String topic; // topic名称
 
     @Override
     public void checkFields() throws RemotingCommandException {
