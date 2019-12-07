@@ -21,10 +21,12 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是获取namesrv服务器上某namespace-key下的value对象请求报文数据
 public class GetKVConfigRequestHeader implements CommandCustomHeader {
     
 	@CFNotNull
     private String namespace; // 命名空间
+	
     @CFNotNull
     private String key; // key对象
 
