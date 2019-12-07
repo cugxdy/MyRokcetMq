@@ -22,15 +22,20 @@ import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.annotation.CFNullable;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是将在broker服务器上commitLog中msgId索引处的msg发送至clientId的客户端对象
 public class ConsumeMessageDirectlyResultRequestHeader implements CommandCustomHeader {
-    @CFNotNull
-    private String consumerGroup;
+    
+	@CFNotNull
+    private String consumerGroup; // 消费组名称
+	
     @CFNullable
-    private String clientId;
+    private String clientId; // 客户端Id
+    
     @CFNullable
-    private String msgId;
+    private String msgId; // 消息Id
+    
     @CFNullable
-    private String brokerName;
+    private String brokerName; // Broker名称
 
     @Override
     public void checkFields() throws RemotingCommandException {
