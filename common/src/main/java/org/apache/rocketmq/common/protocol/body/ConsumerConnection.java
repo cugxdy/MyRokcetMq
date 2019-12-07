@@ -26,12 +26,21 @@ import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
+// 它是从Broker服务器上获取消费组group下的Connection、SubscriptionData等对象
 public class ConsumerConnection extends RemotingSerializable {
+	
+	// 它记录着group客户端连接状态
     private HashSet<Connection> connectionSet = new HashSet<Connection>();
+    
+    // 它是记录group-topic的所有SubscriptionData对象
     private ConcurrentMap<String/* Topic */, SubscriptionData> subscriptionTable =
         new ConcurrentHashMap<String, SubscriptionData>();
+    
+    // Push | pull
     private ConsumeType consumeType;
+    // BROADCASTING | CLUSTERING
     private MessageModel messageModel;
+    // CONSUME_FROM_LAST_OFFSET
     private ConsumeFromWhere consumeFromWhere;
 
     public int computeMinVersion() {
