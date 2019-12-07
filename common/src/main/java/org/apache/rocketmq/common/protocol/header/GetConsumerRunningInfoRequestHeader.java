@@ -32,7 +32,7 @@ public class GetConsumerRunningInfoRequestHeader implements CommandCustomHeader 
     private String clientId; // 客户端Id号
     
     @CFNullable
-    private boolean jstackEnable; // 
+    private boolean jstackEnable; // true : 打印线程堆栈信息StackTraceElement对象
 
     @Override
     public void checkFields() throws RemotingCommandException {
