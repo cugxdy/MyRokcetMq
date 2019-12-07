@@ -22,9 +22,16 @@ import java.util.Set;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
+// 它是向Broker服务器发送解锁MessageQueue的请求报文数据
 public class UnlockBatchRequestBody extends RemotingSerializable {
+	
+	// 消费组名称
     private String consumerGroup;
+    
+    // 客户端Id
     private String clientId;
+    
+    // MessageQueue集合Set对象
     private Set<MessageQueue> mqSet = new HashSet<MessageQueue>();
 
     public String getConsumerGroup() {
