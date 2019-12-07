@@ -22,14 +22,17 @@ import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.annotation.CFNullable;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是向Broker服务器注销客户端请求头数据报文
 public class UnregisterClientRequestHeader implements CommandCustomHeader {
-    @CFNotNull
-    private String clientID;
+    
+	@CFNotNull
+    private String clientID; // 客户端Id
 
     @CFNullable
-    private String producerGroup;
+    private String producerGroup; // 生产者组名称
+    
     @CFNullable
-    private String consumerGroup;
+    private String consumerGroup; // 消费者组名称
 
     public String getClientID() {
         return clientID;
