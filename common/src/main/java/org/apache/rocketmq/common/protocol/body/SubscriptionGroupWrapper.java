@@ -23,9 +23,14 @@ import org.apache.rocketmq.common.DataVersion;
 import org.apache.rocketmq.common.subscription.SubscriptionGroupConfig;
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
+// 它是对SubscriptionGroup对象的包装对象
 public class SubscriptionGroupWrapper extends RemotingSerializable {
-    private ConcurrentMap<String, SubscriptionGroupConfig> subscriptionGroupTable =
+    
+	// 记录group下的订阅组信息
+	private ConcurrentMap<String /*group*/, SubscriptionGroupConfig> subscriptionGroupTable =
         new ConcurrentHashMap<String, SubscriptionGroupConfig>(1024);
+    
+	// 数据版本
     private DataVersion dataVersion = new DataVersion();
 
     public ConcurrentMap<String, SubscriptionGroupConfig> getSubscriptionGroupTable() {
