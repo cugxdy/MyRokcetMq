@@ -21,9 +21,12 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是向namesrv服务器上删除某个namespace-key的value对象
 public class DeleteKVConfigRequestHeader implements CommandCustomHeader {
-    @CFNotNull
+    
+	@CFNotNull
     private String namespace; // 命名空间
+	
     @CFNotNull
     private String key; // key 对象
 
