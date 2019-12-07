@@ -21,8 +21,10 @@ import java.util.Map;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
+// 它记录着向客户端发送ResetOffset请求body中数据
 public class ResetOffsetBody extends RemotingSerializable {
-    private Map<MessageQueue, Long> offsetTable;
+    
+	private Map<MessageQueue, Long /*consuerQueueOffset*/> offsetTable;
 
     public Map<MessageQueue, Long> getOffsetTable() {
         return offsetTable;
