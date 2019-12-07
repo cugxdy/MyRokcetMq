@@ -22,13 +22,18 @@ import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.annotation.CFNullable;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+
+// 它是获取指定topic-group下指定客户端的ConsumerStatus状态信息
 public class GetConsumerStatusRequestHeader implements CommandCustomHeader {
+    
+	@CFNotNull
+    private String topic; // topic名称
+	
     @CFNotNull
-    private String topic;
-    @CFNotNull
-    private String group;
+    private String group; // 消费组名称
+    
     @CFNullable
-    private String clientAddr;
+    private String clientAddr; // 客户端地址
 
     @Override
     public void checkFields() throws RemotingCommandException {
