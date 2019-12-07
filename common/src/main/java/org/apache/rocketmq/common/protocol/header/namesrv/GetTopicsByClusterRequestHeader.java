@@ -15,15 +15,17 @@
  * limitations under the License.
  */
 
-package org.apache.rocketmq.common.protocol.header;
+package org.apache.rocketmq.common.protocol.header.namesrv;
 
 import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是namesrv服务器中获取指定cluster下的topic集合对象
 public class GetTopicsByClusterRequestHeader implements CommandCustomHeader {
-    @CFNotNull
-    private String cluster;
+    
+	@CFNotNull
+    private String cluster; // 集群名称
 
     @Override
     public void checkFields() throws RemotingCommandException {
