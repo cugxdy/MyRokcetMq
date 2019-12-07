@@ -22,9 +22,11 @@ import java.util.Map;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
-@Deprecated
+// 客户端返回自身的消费状态(即MessageQueue下的消费偏移量)
 public class GetConsumerStatusBody extends RemotingSerializable {
-    private Map<MessageQueue, Long> messageQueueTable = new HashMap<MessageQueue, Long>();
+    
+	private Map<MessageQueue, Long> messageQueueTable = new HashMap<MessageQueue, Long>();
+    
     private Map<String, Map<MessageQueue, Long>> consumerTable =
         new HashMap<String, Map<MessageQueue, Long>>();
 
