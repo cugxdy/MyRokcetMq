@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
+// 它是获取group-topic-queueId下consumeQueue对象的min、max、consumer索引号
 public class QueryConsumeTimeSpanBody extends RemotingSerializable {
     List<QueueTimeSpan> consumeTimeSpanSet = new ArrayList<QueueTimeSpan>();
 
