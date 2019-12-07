@@ -21,13 +21,21 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 即向所有订阅topic@group下的客户端重置为存储时间戳为timestamp的commLogOffset
 public class ResetOffsetRequestHeader implements CommandCustomHeader {
+    
+	@CFNotNull
+    private String topic; // topic名称
+	
     @CFNotNull
-    private String topic;
-    @CFNotNull
-    private String group;
-    @CFNotNull
+    private String group; // 消费组名称
+    
+    // 1、-1 : 表示获取group-topic下的ConsumerQueue对象最大偏移量
+    // 2、> 0: 表示获取group-topic下的ConsumerQueue对象中在timestamp的偏移量
+    @CFNotNull 
     private long timestamp;
+    
+    // true : timeStampOffset > consumerOffset : 更新timeStampOffset时间戳
     @CFNotNull
     private boolean isForce;
 
