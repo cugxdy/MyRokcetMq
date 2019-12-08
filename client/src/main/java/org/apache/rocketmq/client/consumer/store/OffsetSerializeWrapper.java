@@ -25,6 +25,7 @@ import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 /**
  * Wrapper class for offset serialization
  */
+// 它是用于JSON序列化对象
 public class OffsetSerializeWrapper extends RemotingSerializable {
     private ConcurrentMap<MessageQueue, AtomicLong> offsetTable =
         new ConcurrentHashMap<MessageQueue, AtomicLong>();
