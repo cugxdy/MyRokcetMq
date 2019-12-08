@@ -20,11 +20,11 @@ public enum ReadOffsetType {
     /**
      * From memory
      */
-    READ_FROM_MEMORY,
+    READ_FROM_MEMORY, // 从offsets.json内存中获取offset
     /**
      * From storage
      */
-    READ_FROM_STORE,
+    READ_FROM_STORE, // 从存储引擎中store模块中获取offset
     /**
      * From memory,then from storage
      */
