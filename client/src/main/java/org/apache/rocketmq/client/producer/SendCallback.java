@@ -18,6 +18,7 @@ package org.apache.rocketmq.client.producer;
 
 // sendMessage异步发送消息回调接口类方法
 public interface SendCallback {
+	
     void onSuccess(final SendResult sendResult);
 
     void onException(final Throwable e);
