@@ -21,9 +21,13 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
-// 注册Broker中的body数据
+// 注册Broker中的body数据(TopicConfig、filterServer配置信息)
 public class RegisterBrokerBody extends RemotingSerializable {
+	
+	// 它是记录Broker服务器下的topic-TopicConfig配置对象
     private TopicConfigSerializeWrapper topicConfigSerializeWrapper = new TopicConfigSerializeWrapper();
+    
+    // 它是记录Broker服务器下的filter服务器地址
     private List<String> filterServerList = new ArrayList<String>();
 
     public TopicConfigSerializeWrapper getTopicConfigSerializeWrapper() {
