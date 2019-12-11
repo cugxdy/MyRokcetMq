@@ -24,18 +24,23 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是向nameSrv服务器注册topic-TopicConfig对象的网络请求报文数据
 public class RegisterBrokerRequestHeader implements CommandCustomHeader {
 	
-    @CFNotNull
+    @CFNotNull // Broker名称
     private String brokerName;
-    @CFNotNull
+    
+    @CFNotNull // Broker地址
     private String brokerAddr;
-    @CFNotNull
+    
+    @CFNotNull // cluster集群名称
     private String clusterName;
-    @CFNotNull
+    
+    @CFNotNull // 主从服务地址
     private String haServerAddr;
-    @CFNotNull
-    private Long brokerId;
+    
+    @CFNotNull // BrokerId
+    private Long brokerId; // default = MasterId == 0
 
     @Override
     public void checkFields() throws RemotingCommandException {
