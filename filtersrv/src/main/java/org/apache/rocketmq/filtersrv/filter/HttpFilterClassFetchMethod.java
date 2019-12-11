@@ -23,6 +23,7 @@ import org.apache.rocketmq.common.utils.HttpTinyClient.HttpResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// 它是使用http协议从网络中获取java代码
 public class HttpFilterClassFetchMethod implements FilterClassFetchMethod {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.FILTERSRV_LOGGER_NAME);
     private final String url;
@@ -31,11 +32,13 @@ public class HttpFilterClassFetchMethod implements FilterClassFetchMethod {
         this.url = url;
     }
 
-    @Override
+    @Override// 它是使用Http协议去从指定服务器上去获取java代码字符串
     public String fetch(String topic, String consumerGroup, String className) {
-        String thisUrl = String.format("%s/%s.java", this.url, className);
+        // default : http://fsrep.tbsite.net/filterclass/MyFilter.java
+    	String thisUrl = String.format("%s/%s.java", this.url, className);
 
         try {
+        	// 以UTF-8形式去获取java代码
             HttpResult result = HttpTinyClient.httpGet(thisUrl, null, null, "UTF-8", 5000);
             if (200 == result.code) {
                 return result.content;
