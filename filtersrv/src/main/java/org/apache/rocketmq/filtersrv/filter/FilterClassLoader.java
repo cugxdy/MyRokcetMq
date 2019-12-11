@@ -17,8 +17,10 @@
 
 package org.apache.rocketmq.filtersrv.filter;
 
+// 它是用于将java代码字符串使用java类加载器加载类资源
 public class FilterClassLoader extends ClassLoader {
-    public final Class<?> createNewClass(String name, byte[] b, int off, int len) throws ClassFormatError {
+    
+	public final Class<?> createNewClass(String name, byte[] b, int off, int len) throws ClassFormatError {
         return this.defineClass(name, b, off, len);
     }
 }
