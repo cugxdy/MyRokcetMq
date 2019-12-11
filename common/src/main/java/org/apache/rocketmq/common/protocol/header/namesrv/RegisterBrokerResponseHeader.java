@@ -21,12 +21,13 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNullable;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是向nameSrv服务器注册topic-TopicConfig对象的响应报文数据
 public class RegisterBrokerResponseHeader implements CommandCustomHeader {
 	
-    @CFNullable
+    @CFNullable // 主从服务器地址
     private String haServerAddr;
-    
-    @CFNullable
+     
+    @CFNullable // 主服务器地址
     private String masterAddr;
 
     @Override
