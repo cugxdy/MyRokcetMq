@@ -19,11 +19,15 @@ package org.apache.rocketmq.client.common;
 
 import java.util.Random;
 
+// 线程私有索引计数对象, 从ThreadLocal中获取Integer属性值
 public class ThreadLocalIndex {
+	
     private final ThreadLocal<Integer> threadLocalIndex = new ThreadLocal<Integer>();
     private final Random random = new Random();
 
+    // 从每个线程局部变量表中去获取Integer数据
     public int getAndIncrement() {
+    	// 获取线程下私有index参数值
         Integer index = this.threadLocalIndex.get();
         if (null == index) {
             index = Math.abs(random.nextInt());
@@ -32,10 +36,12 @@ public class ThreadLocalIndex {
             this.threadLocalIndex.set(index);
         }
 
+        // 递增参数值
         index = Math.abs(index + 1);
         if (index < 0)
             index = 0;
 
+        // 设置线程私有变量Index值
         this.threadLocalIndex.set(index);
         return index;
     }
