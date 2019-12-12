@@ -24,9 +24,11 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是从broker服务器上查询该topic下的consumerGroup集合对象
 public class QueryTopicConsumeByWhoRequestHeader implements CommandCustomHeader {
-    @CFNotNull
-    private String topic;
+    
+	@CFNotNull
+    private String topic; // topic名称 
 
     @Override
     public void checkFields() throws RemotingCommandException {
