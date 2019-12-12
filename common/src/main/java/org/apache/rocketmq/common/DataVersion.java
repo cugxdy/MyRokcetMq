@@ -19,6 +19,7 @@ package org.apache.rocketmq.common;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
+// 它记录了数据版本号, Broker服务器记录TopicConfig、ConsumerQueueOffset、SubscriptionData数据版本号
 public class DataVersion extends RemotingSerializable {
     
 	private long timestamp = System.currentTimeMillis();
