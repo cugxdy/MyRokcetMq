@@ -23,9 +23,12 @@ package org.apache.rocketmq.common.protocol.header;
 import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 更新指定group-topic-queueId下的offset属性值(偏移量)响应结果对象
 public class UpdateConsumerOffsetResponseHeader implements CommandCustomHeader {
-    @Override
+    
+	@Override
     public void checkFields() throws RemotingCommandException {
-
+	
     }
+	
 }
