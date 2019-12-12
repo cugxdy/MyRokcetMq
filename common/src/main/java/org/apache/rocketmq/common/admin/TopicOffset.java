@@ -16,9 +16,16 @@
  */
 package org.apache.rocketmq.common.admin;
 
+// 它记录着Broker服务器topic-queueId下的CnsumerQueue相关偏移量数据
 public class TopicOffset {
+	
+	// 指定topic-queueId下的consumeQueue下最小索引(单位:20字节)
     private long minOffset;
+    
+    // 指定topic-queueId下的consumeQueue下最大索引(单位:20字节)
     private long maxOffset;
+    
+    // 获取该ConsumerQueue最新存储消息的存储时间戳
     private long lastUpdateTimestamp;
 
     public long getMinOffset() {
