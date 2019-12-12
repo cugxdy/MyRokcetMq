@@ -25,6 +25,7 @@ import org.apache.rocketmq.common.stats.StatsSnapshot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// 它是记录客户端SendMessage、PullMessage对象相关统计, 例如消费时间、发送时间
 public class ConsumerStatsManager {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.CLIENT_LOGGER_NAME);
 
@@ -34,10 +35,15 @@ public class ConsumerStatsManager {
     private static final String TOPIC_AND_GROUP_PULL_TPS = "PULL_TPS";
     private static final String TOPIC_AND_GROUP_PULL_RT = "PULL_RT";
 
+    // 它是记录用户消费消息成功计数器
     private final StatsItemSet topicAndGroupConsumeOKTPS;
+    // 它是记录用户消息消费所消耗时间(单位ms)
     private final StatsItemSet topicAndGroupConsumeRT;
+    // 它是记录用户消费消息失败计数器
     private final StatsItemSet topicAndGroupConsumeFailedTPS;
+    // 它是记录PullMessage消息总数计数器
     private final StatsItemSet topicAndGroupPullTPS;
+    // 它是记录PullMessage消息所消耗时间戳
     private final StatsItemSet topicAndGroupPullRT;
 
     public ConsumerStatsManager(final ScheduledExecutorService scheduledExecutorService) {
@@ -84,6 +90,7 @@ public class ConsumerStatsManager {
     public ConsumeStatus consumeStatus(final String group, final String topic) {
         ConsumeStatus cs = new ConsumeStatus();
         {
+        	// 获取PullMessageTime所消费TPS数值
             StatsSnapshot ss = this.getPullRT(group, topic);
             if (ss != null) {
                 cs.setPullRT(ss.getAvgpt());
@@ -91,6 +98,7 @@ public class ConsumerStatsManager {
         }
 
         {
+        	// 获取PullMessageSize所消费TPS数值
             StatsSnapshot ss = this.getPullTPS(group, topic);
             if (ss != null) {
                 cs.setPullTPS(ss.getTps());
@@ -98,6 +106,7 @@ public class ConsumerStatsManager {
         }
 
         {
+        	// 获取ConsumerTime的TPS数值
             StatsSnapshot ss = this.getConsumeRT(group, topic);
             if (ss != null) {
                 cs.setConsumeRT(ss.getAvgpt());
@@ -105,6 +114,7 @@ public class ConsumerStatsManager {
         }
 
         {
+        	// 获取ConsumerOk下的TPS数值
             StatsSnapshot ss = this.getConsumeOKTPS(group, topic);
             if (ss != null) {
                 cs.setConsumeOKTPS(ss.getTps());
@@ -112,6 +122,7 @@ public class ConsumerStatsManager {
         }
 
         {
+        	// 获取ConsumerFail下的TPS数值
             StatsSnapshot ss = this.getConsumeFailedTPS(group, topic);
             if (ss != null) {
                 cs.setConsumeFailedTPS(ss.getTps());
@@ -119,6 +130,7 @@ public class ConsumerStatsManager {
         }
 
         {
+        	// 记录用户自定义接口消息消费失败消息数量
             StatsSnapshot ss = this.topicAndGroupConsumeFailedTPS.getStatsDataInHour(topic + "@" + group);
             if (ss != null) {
                 cs.setConsumeFailedMsgs(ss.getSum());
@@ -128,14 +140,17 @@ public class ConsumerStatsManager {
         return cs;
     }
 
+    // 获取PullMessageTime所消费TPS数值
     private StatsSnapshot getPullRT(final String group, final String topic) {
         return this.topicAndGroupPullRT.getStatsDataInMinute(topic + "@" + group);
     }
 
+    // 获取PullMessageSize所消费TPS数值
     private StatsSnapshot getPullTPS(final String group, final String topic) {
         return this.topicAndGroupPullTPS.getStatsDataInMinute(topic + "@" + group);
     }
 
+    // 获取ConsumerTime的TPS数值
     private StatsSnapshot getConsumeRT(final String group, final String topic) {
         StatsSnapshot statsData = this.topicAndGroupConsumeRT.getStatsDataInMinute(topic + "@" + group);
         if (0 == statsData.getSum()) {
@@ -145,10 +160,12 @@ public class ConsumerStatsManager {
         return statsData;
     }
 
+    // 获取ConsumerOk下的TPS数值
     private StatsSnapshot getConsumeOKTPS(final String group, final String topic) {
         return this.topicAndGroupConsumeOKTPS.getStatsDataInMinute(topic + "@" + group);
     }
 
+    // 获取ConsumerFail下的TPS数值
     private StatsSnapshot getConsumeFailedTPS(final String group, final String topic) {
         return this.topicAndGroupConsumeFailedTPS.getStatsDataInMinute(topic + "@" + group);
     }
