@@ -20,6 +20,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 
 public class StoreUtil {
+	// default = 8457945088
     public static final long TOTAL_PHYSICAL_MEMORY_SIZE = getTotalPhysicalMemorySize();
 
     // 获得物理内存大小
