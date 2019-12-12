@@ -24,11 +24,15 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 查询指定group-topic-queueId下的ConsumerQueueoffset偏移量请求报文数据
 public class QueryConsumerOffsetRequestHeader implements CommandCustomHeader {
-    @CFNotNull
+    
+	@CFNotNull
     private String consumerGroup;
+	
     @CFNotNull
     private String topic;
+    
     @CFNotNull
     private Integer queueId;
 
