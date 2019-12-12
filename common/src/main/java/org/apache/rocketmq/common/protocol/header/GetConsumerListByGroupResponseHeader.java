@@ -20,6 +20,7 @@ package org.apache.rocketmq.common.protocol.header;
 import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 获取同一消费组group下所有的clientId对象响应报文数据
 public class GetConsumerListByGroupResponseHeader implements CommandCustomHeader {
 
     @Override
