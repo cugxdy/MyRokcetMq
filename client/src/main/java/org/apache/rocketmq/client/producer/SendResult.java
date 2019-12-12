@@ -19,6 +19,7 @@ package org.apache.rocketmq.client.producer;
 import com.alibaba.fastjson.JSON;
 import org.apache.rocketmq.common.message.MessageQueue;
 
+// 它记录着消息发送(SendMessage)结果对象, 例如该消息在Broker服务器consumerOffset、commitLogOffset;
 public class SendResult {
 	
     private SendStatus sendStatus; // 消息发送状态
@@ -38,6 +39,7 @@ public class SendResult {
     private boolean traceOn = true; // 
 
     public SendResult() {
+    	
     }
 
     public SendResult(SendStatus sendStatus, String msgId, String offsetMsgId, MessageQueue messageQueue,
