@@ -25,31 +25,46 @@ import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.annotation.CFNullable;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是客户端向Broker服务器SendMessage请求报文数据
 public class SendMessageRequestHeader implements CommandCustomHeader {
-    @CFNotNull
+	
+    @CFNotNull // 生成者名称
     private String producerGroup;
-    @CFNotNull
+    
+    @CFNotNull // topic名称
     private String topic;
-    @CFNotNull
+    
+    @CFNotNull // 默认topic名称
     private String defaultTopic;
-    @CFNotNull
+    
+    @CFNotNull // 默认topic下队列数目
     private Integer defaultTopicQueueNums;
-    @CFNotNull
+    
+    @CFNotNull // 队列ID
     private Integer queueId;
-    @CFNotNull
+    
+    @CFNotNull // 系统flag
     private Integer sysFlag;
-    @CFNotNull
+    
+    @CFNotNull // 消息出生时间戳
     private Long bornTimestamp;
-    @CFNotNull
+    
+    @CFNotNull // flag
     private Integer flag;
-    @CFNullable
+     
+    @CFNullable // 属性字符串
     private String properties;
-    @CFNullable
+    
+    @CFNullable // 重复消费次数
     private Integer reconsumeTimes;
-    @CFNullable
+    
+    @CFNullable // 它是由客户端ClientConfig对象决定
     private boolean unitMode = false;
-    @CFNullable
+    
+    @CFNullable // 批量模式
     private boolean batch = false;
+    
+    // 最大重消费次数
     private Integer maxReconsumeTimes;
 
     @Override
