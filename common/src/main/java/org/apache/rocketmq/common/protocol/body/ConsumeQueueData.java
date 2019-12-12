@@ -17,15 +17,20 @@
 
 package org.apache.rocketmq.common.protocol.body;
 
+// 它记录着使用SubscriptionData
 public class ConsumeQueueData {
 
-    private long physicOffset;
-    private int physicSize;
-    private long tagsCode;
-    private String extendDataJson;
-    private String bitMap;
-    private boolean eval;
-    private String msg;
+    private long physicOffset; // consumeQueue中指向的commitLog中偏移量
+    private int physicSize; // 所指向的消息占用字节数
+    
+    private long tagsCode;  // 获取tagsCode
+    
+    private String extendDataJson; // 消息所对应ConsumeQueueExt.CqExtUnit字符串对象
+    
+    private String bitMap; // CqExtUnit对象中filterBitMap对象所对应的String对象
+ 
+    private boolean eval; // 是否匹配过滤器
+    private String msg; // Cq extend not exist!addr:
 
     public long getPhysicOffset() {
         return physicOffset;
