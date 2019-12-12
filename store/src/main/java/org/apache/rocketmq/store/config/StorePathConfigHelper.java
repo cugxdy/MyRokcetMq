@@ -19,43 +19,51 @@ package org.apache.rocketmq.store.config;
 import java.io.File;
 
 // 存储路径配置项
+// 在C:\Users\Administrator\store基础上记录Store各个属性的存储路径
 public class StorePathConfigHelper {
 
+	// 消费队列
     public static String getStorePathConsumeQueue(final String rootDir) {
         return rootDir + File.separator + "consumequeue";
     }
 
+    // 消费扩展队列
     public static String getStorePathConsumeQueueExt(final String rootDir) {
         return rootDir + File.separator + "consumequeue_ext";
     }
 
+    // 索引文件
     public static String getStorePathIndex(final String rootDir) {
         return rootDir + File.separator + "index";
     }
 
+    // checkpoint文件目录
     public static String getStoreCheckpoint(final String rootDir) {
         return rootDir + File.separator + "checkpoint";
     }
 
+    // abort文件目录
     public static String getAbortFile(final String rootDir) {
         return rootDir + File.separator + "abort";
     }
 
-    // 获取文件名称
+    // lock文件目录
     public static String getLockFile(final String rootDir) {
         return rootDir + File.separator + "lock";
     }
 
+    // delayOffset配置文件
     public static String getDelayOffsetStorePath(final String rootDir) {
         return rootDir + File.separator + "config" + File.separator + "delayOffset.json";
     }
 
+    // 状态表
     public static String getTranStateTableStorePath(final String rootDir) {
         return rootDir + File.separator + "transaction" + File.separator + "statetable";
     }
 
+    // 重做日志(事务)
     public static String getTranRedoLogStorePath(final String rootDir) {
         return rootDir + File.separator + "transaction" + File.separator + "redolog";
     }
-
 }
