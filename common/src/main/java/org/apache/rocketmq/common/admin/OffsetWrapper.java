@@ -16,11 +16,16 @@
  */
 package org.apache.rocketmq.common.admin;
 
-// 偏移量统计类
+// 偏移量统计类, 用于Broker服务器消费状态
 public class OffsetWrapper {
+	
+	// 获取在consumeQueue最大物理偏移量(单位:CQ_STORE_UNIT_SIZE)
     private long brokerOffset;
+    
+    // 获取指定group@topic-queueId下的offset对象(用户消费的偏移量)
     private long consumerOffset;
 
+    // 获取最近消费的消息对象在commitLog中的存储时间戳
     private long lastTimestamp;
 
     public long getBrokerOffset() {
