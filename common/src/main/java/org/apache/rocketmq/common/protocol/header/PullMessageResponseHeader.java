@@ -24,7 +24,7 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
-// 它是Broker服务器向客户端
+// 它是Broker服务器向客户端PullMessage响应报文头数据
 public class PullMessageResponseHeader implements CommandCustomHeader {
 	
     @CFNotNull
