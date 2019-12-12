@@ -56,7 +56,7 @@ public class PullMessageRequestHeader implements CommandCustomHeader {
     private String subscription; // 订阅字符串 (AAA || BBB ; a in (0,9))
     
     @CFNotNull
-    private Long subVersion; // 版本号
+    private Long subVersion; // SubscriptionData版本号
     
     private String expressionType; // 表达式类型(TAG | SQL92)
 
