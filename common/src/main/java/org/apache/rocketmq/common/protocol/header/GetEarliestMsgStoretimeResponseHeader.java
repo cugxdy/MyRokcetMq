@@ -24,9 +24,11 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是获取topic-queueId下的consumeQueue对象的存储时间戳最早的响应数据对象
 public class GetEarliestMsgStoretimeResponseHeader implements CommandCustomHeader {
-    @CFNotNull
-    private Long timestamp;
+    
+	@CFNotNull
+    private Long timestamp; // 消息存储时间戳
 
     @Override
     public void checkFields() throws RemotingCommandException {
