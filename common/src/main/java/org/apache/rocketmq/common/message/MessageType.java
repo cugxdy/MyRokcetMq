@@ -17,9 +17,10 @@
 
 package org.apache.rocketmq.common.message;
 
+// 它记录Message枚举值
 public enum MessageType {
-    Normal_Msg,
-    Trans_Msg_Half,
-    Trans_msg_Commit,
-    Delay_Msg,
+    Normal_Msg, // 正常消息
+    Trans_Msg_Half, // 事务消息
+    Trans_msg_Commit,  // 事务提交消息
+    Delay_Msg, // 延迟消息
 }
