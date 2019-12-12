@@ -36,21 +36,27 @@ public class StoreCheckpoint {
     private volatile long logicsMsgTimestamp = 0;
     private volatile long indexMsgTimestamp = 0;
 
+    // 创建StoreCheckpoint对象
+    // C:\Users\Administrator\store\checkpoint
     public StoreCheckpoint(final String scpPath) throws IOException {
         File file = new File(scpPath);
         MappedFile.ensureDirOK(file.getParent());
         boolean fileExists = file.exists();
 
+        // 获取该文件的FileChannel对象
         this.randomAccessFile = new RandomAccessFile(file, "rw");
         this.fileChannel = this.randomAccessFile.getChannel();
+        // 内存映射ByteBuffer对象
         this.mappedByteBuffer = fileChannel.map(MapMode.READ_WRITE, 0, MappedFile.OS_PAGE_SIZE);
 
         if (fileExists) {
             log.info("store checkpoint file exists, " + scpPath);
+            // 获取3 * 8字节数
             this.physicMsgTimestamp = this.mappedByteBuffer.getLong(0);
             this.logicsMsgTimestamp = this.mappedByteBuffer.getLong(8);
             this.indexMsgTimestamp = this.mappedByteBuffer.getLong(16);
 
+            // 日志记录physicMsgTimestamp、logicsMsgTimestamp、indexMsgTimestamp属性值
             log.info("store checkpoint file physicMsgTimestamp " + this.physicMsgTimestamp + ", "
                 + UtilAll.timeMillisToHumanString(this.physicMsgTimestamp));
             log.info("store checkpoint file logicsMsgTimestamp " + this.logicsMsgTimestamp + ", "
@@ -75,6 +81,7 @@ public class StoreCheckpoint {
         }
     }
 
+    // 将属性值存入文件中
     public void flush() {
         this.mappedByteBuffer.putLong(0, this.physicMsgTimestamp);
         this.mappedByteBuffer.putLong(8, this.logicsMsgTimestamp);
@@ -102,9 +109,11 @@ public class StoreCheckpoint {
         return Math.min(this.getMinTimestamp(), this.indexMsgTimestamp);
     }
 
+    // 获取physicMsgTimestamp,logicsMsgTimestamp中最小值 - 3s
     public long getMinTimestamp() {
         long min = Math.min(this.physicMsgTimestamp, this.logicsMsgTimestamp);
 
+        // 减少3s时间
         min -= 1000 * 3;
         if (min < 0)
             min = 0;
