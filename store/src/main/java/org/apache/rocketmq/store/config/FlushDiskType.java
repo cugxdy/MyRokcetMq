@@ -18,6 +18,6 @@ package org.apache.rocketmq.store.config;
 
 // 刷新磁盘类型
 public enum FlushDiskType {
-    SYNC_FLUSH,
-    ASYNC_FLUSH
+    SYNC_FLUSH, // 同步
+    ASYNC_FLUSH // 异步
 }
