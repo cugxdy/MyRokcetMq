@@ -25,20 +25,29 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是用于去向Broker服务器创建TopicConfig对象的请求报文数据
 public class CreateTopicRequestHeader implements CommandCustomHeader {
+    
+	@CFNotNull
+    private String topic;  // topic名称
+	
     @CFNotNull
-    private String topic;
+    private String defaultTopic; // 默认topic名称
+    
     @CFNotNull
-    private String defaultTopic;
+    private Integer readQueueNums; // 读队列数目
+    
     @CFNotNull
-    private Integer readQueueNums;
+    private Integer writeQueueNums; // 写队列数目
+    
     @CFNotNull
-    private Integer writeQueueNums;
-    @CFNotNull
-    private Integer perm;
+    private Integer perm; // 读写权限
+
     @CFNotNull
     private String topicFilterType;
+    
     private Integer topicSysFlag;
+    
     @CFNotNull
     private Boolean order = false;
 
