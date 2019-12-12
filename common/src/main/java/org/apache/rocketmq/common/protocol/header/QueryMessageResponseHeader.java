@@ -24,11 +24,14 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是客户端依据key对象查询消息(IndexFile)响应报文数据对象
 public class QueryMessageResponseHeader implements CommandCustomHeader {
+   
+	@CFNotNull
+    private Long indexLastUpdateTimestamp; // IndexService最新最大物理偏移量(lastIndexFile);
+    
     @CFNotNull
-    private Long indexLastUpdateTimestamp;
-    @CFNotNull
-    private Long indexLastUpdatePhyoffset;
+    private Long indexLastUpdatePhyoffset; // IndexService最新更新时间戳(lastIndexFile);
 
     @Override
     public void checkFields() throws RemotingCommandException {
