@@ -49,6 +49,7 @@ public class ExpressionType {
      * (a > 10 AND a < 100) OR (b IS NOT NULL AND b=TRUE)
      * </p>
      */
+	// 它主要是针对特定字符串的解析工作
     public static final String SQL92 = "SQL92";
 
     /**
