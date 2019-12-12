@@ -24,9 +24,11 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是获取topic-queueId下的consumeQueue对象中的最小偏移量响应结果对象(单位:20字节)
 public class GetMinOffsetResponseHeader implements CommandCustomHeader {
-    @CFNotNull
-    private Long offset;
+   
+	@CFNotNull
+    private Long offset; // MinConsumerQueueOffset
 
     @Override
     public void checkFields() throws RemotingCommandException {
