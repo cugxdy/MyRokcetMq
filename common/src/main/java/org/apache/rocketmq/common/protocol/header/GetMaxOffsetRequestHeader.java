@@ -24,11 +24,14 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是获取topic-queueId下的consumeQueue对象中中最大偏移量(单位:20字节)
 public class GetMaxOffsetRequestHeader implements CommandCustomHeader {
+	
     @CFNotNull
-    private String topic;
+    private String topic; // topic名称
+    
     @CFNotNull
-    private Integer queueId;
+    private Integer queueId; // 队列Id
 
     @Override
     public void checkFields() throws RemotingCommandException {
