@@ -24,17 +24,23 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 它是客户端查询消息(IndexFile)请求报文数据对象
 public class QueryMessageRequestHeader implements CommandCustomHeader {
+    
+	@CFNotNull
+    private String topic; // Topic名称
+    
+	@CFNotNull
+    private String key; // 消息的唯一Key值对象
+    
     @CFNotNull
-    private String topic;
+    private Integer maxNum; // 消息计数
+    
     @CFNotNull
-    private String key;
+    private Long beginTimestamp; // 开始时间戳
+    
     @CFNotNull
-    private Integer maxNum;
-    @CFNotNull
-    private Long beginTimestamp;
-    @CFNotNull
-    private Long endTimestamp;
+    private Long endTimestamp; // 结束时间戳
 
     @Override
     public void checkFields() throws RemotingCommandException {
