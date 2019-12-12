@@ -26,17 +26,21 @@ import org.apache.rocketmq.common.constant.LoggerName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// 它记录着namesrv服务器启动配置选项, 配置文件路径
 public class NamesrvConfig {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
 
     private String rocketmqHome = System.getProperty(MixAll.ROCKETMQ_HOME_PROPERTY, System.getenv(MixAll.ROCKETMQ_HOME_ENV));
     // kv存储形式为json
     private String kvConfigPath = System.getProperty("user.home") + File.separator + "namesrv" + File.separator + "kvConfig.json";
+    
     // 配置文件为namesrv.properties
     private String configStorePath = System.getProperty("user.home") + File.separator + "namesrv" + File.separator + "namesrv.properties";
     
     private String productEnvName = "center";
     private boolean clusterTest = false;
+    
+    // 是否启动顺序消息
     private boolean orderMessageEnable = false;
 
     public boolean isOrderMessageEnable() {
