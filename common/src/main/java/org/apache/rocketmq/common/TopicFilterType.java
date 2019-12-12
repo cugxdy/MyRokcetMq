@@ -16,8 +16,8 @@
  */
 package org.apache.rocketmq.common;
 
+// 它记录了TopicFilter过滤枚举值: single | multi
 public enum TopicFilterType {
     SINGLE_TAG,
     MULTI_TAG
-
 }
