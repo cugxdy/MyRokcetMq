@@ -21,17 +21,17 @@ public enum ServiceState {
     /**
      * Service just created,not start
      */
-    CREATE_JUST,
+    CREATE_JUST, // 服务刚刚创建
     /**
      * Service Running
      */
-    RUNNING,
+    RUNNING, // 运行状态
     /**
      * Service shutdown
      */
-    SHUTDOWN_ALREADY,
+    SHUTDOWN_ALREADY, // shutdown状态
     /**
      * Service Start failure
      */
-    START_FAILED;
+    START_FAILED; // 服务启动失败
 }
