@@ -22,11 +22,17 @@ import java.util.List;
 
 public class QueryMessageResult {
 
+	// 消息获取成功SelectMappedBufferResult的List对象
     private final List<SelectMappedBufferResult> messageMapedList =
         new ArrayList<SelectMappedBufferResult>(100);
 
+    // 获取消息ByteBuffer的List对象
     private final List<ByteBuffer> messageBufferList = new ArrayList<ByteBuffer>(100);
+    
+    // IndexService最新更新时间戳(lastIndexFile);
     private long indexLastUpdateTimestamp;
+    
+    // IndexService最新最大物理偏移量(lastIndexFile);
     private long indexLastUpdatePhyoffset;
 
     private int bufferTotalSize = 0;
