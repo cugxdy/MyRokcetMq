@@ -38,7 +38,7 @@ public class MessagingAccessPointImpl implements MessagingAccessPoint {
 
     public MessagingAccessPointImpl(final KeyValue accessPointProperties) {
         this.accessPointProperties = accessPointProperties;
-    }
+    } 
 
     @Override
     public KeyValue properties() {
