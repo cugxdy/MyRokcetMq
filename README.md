@@ -8,7 +8,10 @@
 详情请看pdf: https://cugxdy.oss-cn-beijing.aliyuncs.com/java/nio.pdf<br/>
 2、配置参数 : <br/>
 &emsp;1、enableConsumeQueueExt : 决定是否启用TransientStorePool对象, default = false<br/>
-&emsp;2、useReentrantLockWhenPutMessage: 决定是否启用ReentrantLock锁
+&emsp;2、useReentrantLockWhenPutMessage: 决定是否启用ReentrantLock锁<br/>
+&emsp;3、filterSupportRetry : 记录在Broker服务器过滤时, 是否使用ExpressionForRetryMessageFilter对象, 对RetryGroup主题过滤时,使用originalTopic对象<br/>
+&emsp;4、enablePropertyFilter : 记录Broker服务器是否允许SQL92模式的过滤<br/>
+&emsp;5、transientStorePoolEnable : 记录Broker服务器是否启用TransientStorePool对象 <br/>
 3、MappFile对象提交与刷新流程图:
 ![Image text](https://cugxdy.oss-cn-beijing.aliyuncs.com/picture/ONUO5%28PY3_%7B%7D1DSK%25M62G47.png)<br/>
 4、TopicConfigManager对象:
