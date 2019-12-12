@@ -29,13 +29,17 @@ import org.apache.rocketmq.common.utils.HttpTinyClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+// 在Broker服务器定时向特定url发送信息
 public class TopAddressing {
     private static final Logger log = LoggerFactory.getLogger(LoggerName.COMMON_LOGGER_NAME);
 
     private String nsAddr;
     
+    // default = http://jmenv.tbsite.net:8080/rocketmq/nsaddr
     private String wsAddr;
     
+    // default = false
     private String unitName;
 
     public TopAddressing(final String wsAddr) {
@@ -47,6 +51,7 @@ public class TopAddressing {
         this.unitName = unitName;
     }
 
+    // 以'\r\n'去分割字符串对象
     private static String clearNewLine(final String str) {
         String newString = str.trim();
         int index = newString.indexOf("\r");
@@ -66,6 +71,7 @@ public class TopAddressing {
         return fetchNSAddr(true, 3000);
     }
 
+    // 向特定url发送Http请求报文数据, 例如: 获取namesrv服务器地址
     public final String fetchNSAddr(boolean verbose, long timeoutMills) {
         String url = this.wsAddr;
         try {
