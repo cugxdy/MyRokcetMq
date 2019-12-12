@@ -24,9 +24,11 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 查询指定group-topic-queueId下的ConsumerQueueOffset偏移量响应结果对象
 public class QueryConsumerOffsetResponseHeader implements CommandCustomHeader {
-    @CFNotNull
-    private Long offset;
+    
+	@CFNotNull
+    private Long offset; // ConsumerQueueOffset偏移量
 
     @Override
     public void checkFields() throws RemotingCommandException {
