@@ -18,9 +18,12 @@ package org.apache.rocketmq.common.message;
 
 import java.net.SocketAddress;
 
+// 记录着消息唯一值, 1、storeHost 2、Message对象所在commitLog偏移量
 public class MessageId {
-    private SocketAddress address;
-    private long offset;
+	
+    private SocketAddress address; // 消息bron地址
+    
+    private long offset; // 消息所在commitLog偏移量
 
     public MessageId(SocketAddress address, long offset) {
         this.address = address;
