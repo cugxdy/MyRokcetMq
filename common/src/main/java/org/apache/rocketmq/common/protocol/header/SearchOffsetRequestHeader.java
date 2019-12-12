@@ -24,13 +24,17 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 查询指定时间戳的消息在ConsumerQueue中的偏移量
 public class SearchOffsetRequestHeader implements CommandCustomHeader {
-    @CFNotNull
-    private String topic;
-    @CFNotNull
-    private Integer queueId;
-    @CFNotNull
-    private Long timestamp;
+    
+	@CFNotNull
+    private String topic; // topic名称
+    
+	@CFNotNull
+    private Integer queueId; // 队列Id
+    
+    @CFNotNull 
+    private Long timestamp; // 时间戳
 
     @Override
     public void checkFields() throws RemotingCommandException {
