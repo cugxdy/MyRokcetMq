@@ -21,9 +21,11 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 向同消费组的Channel对象发送消费组成员发生变化(请求头部数据)
 public class NotifyConsumerIdsChangedRequestHeader implements CommandCustomHeader {
-    @CFNotNull
-    private String consumerGroup;
+    
+	@CFNotNull
+    private String consumerGroup; // 发生变化的消费组名称
 
     @Override
     public void checkFields() throws RemotingCommandException {
