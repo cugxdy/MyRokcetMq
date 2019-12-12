@@ -19,6 +19,7 @@ package org.apache.rocketmq.common.protocol.body;
 
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
+// 它是对Broker服务器Day、Hour、Minute模式的统计结果对象
 public class BrokerStatsData extends RemotingSerializable {
 
     private BrokerStatsItem statsMinute;
