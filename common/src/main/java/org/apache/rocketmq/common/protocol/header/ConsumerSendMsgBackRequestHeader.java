@@ -22,18 +22,27 @@ import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.annotation.CFNullable;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 将消费端长久未消费的消息重新写回Broker服务器中
 public class ConsumerSendMsgBackRequestHeader implements CommandCustomHeader {
+	
     @CFNotNull
-    private Long offset;
+    private Long offset; // commitLogOffset
+    
     @CFNotNull
-    private String group;
+    private String group; // 消费组名称
+    
     @CFNotNull
-    private Integer delayLevel;
-    private String originMsgId;
-    private String originTopic;
+    private Integer delayLevel; // 延迟级别 default = 3 | 0
+    
+    private String originMsgId; // 即body中消息MsgId
+    
+    private String originTopic; // 即body中消息topic
+    
     @CFNullable
     private boolean unitMode = false;
-    private Integer maxReconsumeTimes;
+    
+    // 最大重复消费次数
+    private Integer maxReconsumeTimes; // default = 16
 
     @Override
     public void checkFields() throws RemotingCommandException {
