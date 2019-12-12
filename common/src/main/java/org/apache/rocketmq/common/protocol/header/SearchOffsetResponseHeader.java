@@ -24,9 +24,11 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 依据时间戳查询消息consumerQueue偏移量的响应报文数据
 public class SearchOffsetResponseHeader implements CommandCustomHeader {
-    @CFNotNull
-    private Long offset;
+   
+	@CFNotNull
+    private Long offset; // 根据时间戳查询消息所在的consumerQueue偏移量
 
     @Override
     public void checkFields() throws RemotingCommandException {
