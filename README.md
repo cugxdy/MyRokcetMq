@@ -12,9 +12,11 @@
 &emsp;3、filterSupportRetry : 记录在Broker服务器过滤时, 是否使用ExpressionForRetryMessageFilter对象, 对RetryGroup主题过滤时,使用originalTopic对象<br/>
 &emsp;4、enablePropertyFilter : 记录Broker服务器是否允许SQL92模式的过滤<br/>
 &emsp;5、transientStorePoolEnable : 记录Broker服务器是否启用TransientStorePool对象 <br/>
-3、MappFile对象提交与刷新流程图:
+3、RocketMq消息交互流程图:
+![Image text](https://cugxdy.oss-cn-beijing.aliyuncs.com/picture/RocketMq%E4%BA%A4%E4%BA%92%E5%9B%BE.png)<br/>
+4、MappFile对象提交与刷新流程图:
 ![Image text](https://cugxdy.oss-cn-beijing.aliyuncs.com/picture/ONUO5%28PY3_%7B%7D1DSK%25M62G47.png)<br/>
-4、TopicConfigManager对象:
+5、TopicConfigManager对象:
 ![Image text](https://cugxdy.oss-cn-beijing.aliyuncs.com/picture/9M%7B%7EXMBH5LC%7DL3SDB%2830_AR.png)<br/>
 #### 安装教程
 
