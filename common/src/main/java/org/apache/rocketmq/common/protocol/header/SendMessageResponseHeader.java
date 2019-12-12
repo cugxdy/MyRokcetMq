@@ -24,14 +24,19 @@ import org.apache.rocketmq.remoting.CommandCustomHeader;
 import org.apache.rocketmq.remoting.annotation.CFNotNull;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 
+// 向Broker服务器发送SendMessage消息响应报文对象
 public class SendMessageResponseHeader implements CommandCustomHeader {
+    
+	@CFNotNull
+    private String msgId; // 消息唯一ID(ip + port + offset)
+	
     @CFNotNull
-    private String msgId;
+    private Integer queueId; // 队列Id
+    
     @CFNotNull
-    private Integer queueId;
-    @CFNotNull
-    private Long queueOffset;
-    private String transactionId;
+    private Long queueOffset; // consumeQueue中偏移量
+    
+    private String transactionId; // 无用 ? 
 
     @Override
     public void checkFields() throws RemotingCommandException {
