@@ -19,6 +19,7 @@ package org.apache.rocketmq.common.filter;
 
 import org.apache.rocketmq.common.message.MessageExt;
 
+// 它主要是用于在filter服务器对消息进行过滤
 public interface MessageFilter {
     boolean match(final MessageExt msg, final FilterContext context);
 }
