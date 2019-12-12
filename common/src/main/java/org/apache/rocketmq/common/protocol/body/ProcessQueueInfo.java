@@ -19,24 +19,43 @@ package org.apache.rocketmq.common.protocol.body;
 
 import org.apache.rocketmq.common.UtilAll;
 
+//
 public class ProcessQueueInfo {
     private long commitOffset;
 
+    // 它记录着ProcessQueue.msgTreeMap中firstConsumerOffset对象
     private long cachedMsgMinOffset;
+    
+    // 它记录着ProcessQueue.msgTreeMap中lastConsumerOffset对象
     private long cachedMsgMaxOffset;
+    
+    // 它记录着ProcessQueue.msgTreeMap中msgTreeMap.size(): 消息数目
     private int cachedMsgCount;
+    
+    // 它记录着ProcessQueue.msgTreeMap中消息内容占用字节数(单位 : 1M)
     private int cachedMsgSizeInMiB;
-
+    
+    // 它记录着ProcessQueue.consumingMsgOrderlyTreeMap中firstConsumerOffset对象
     private long transactionMsgMinOffset;
+    
+    // 它记录着ProcessQueue.consumingMsgOrderlyTreeMap中lastConsumerOffset对象
     private long transactionMsgMaxOffset;
+    
+    // 它记录着ProcessQueue.consumingMsgOrderlyTreeMap中consumingMsgOrderlyTreeMap.size(): 消息数目
     private int transactionMsgCount;
 
+    // 记录ProcessQueue对象锁资源状态
     private boolean locked;
+    // 记录ProcessQueue对象获取锁资源失败计数器
     private long tryUnlockTimes;
+    // 记录ProcessQueue对象所对应MessageQueue获取锁资源的时间戳
     private long lastLockTimestamp;
 
+    // 记录ProcessQueue对象下线状态
     private boolean droped;
+    // 记录ProcessQueue对象PullMessage时间戳
     private long lastPullTimestamp;
+    // 记录ProcessQueue对象TakeMessage时间戳
     private long lastConsumeTimestamp;
 
     public long getCommitOffset() {
