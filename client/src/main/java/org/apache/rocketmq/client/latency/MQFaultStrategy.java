@@ -22,12 +22,17 @@ import org.apache.rocketmq.client.log.ClientLogger;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.slf4j.Logger;
 
+// 
 public class MQFaultStrategy {
     private final static Logger log = ClientLogger.getLog();
+    
     private final LatencyFaultTolerance<String> latencyFaultTolerance = new LatencyFaultToleranceImpl();
 
+    // Producer消息发送容错策略。默认情况下容错策略关闭 default = false
+    // true : 启用Broker故障延迟机制
     private boolean sendLatencyFaultEnable = false;
 
+    // 它是记录在SendMessage过程中需规避的Broker服务器时间戳策略
     private long[] latencyMax = {50L, 100L, 550L, 1000L, 2000L, 3000L, 15000L};
     private long[] notAvailableDuration = {0L, 0L, 30000L, 60000L, 120000L, 180000L, 600000L};
 
@@ -56,28 +61,38 @@ public class MQFaultStrategy {
     }
 
     public MessageQueue selectOneMessageQueue(final TopicPublishInfo tpInfo, final String lastBrokerName) {
-        if (this.sendLatencyFaultEnable) {
+        
+    	if (this.sendLatencyFaultEnable) {
             try {
                 int index = tpInfo.getSendWhichQueue().getAndIncrement();
+                
                 for (int i = 0; i < tpInfo.getMessageQueueList().size(); i++) {
+                	// 随机获取MessageQueue对象
                     int pos = Math.abs(index++) % tpInfo.getMessageQueueList().size();
                     if (pos < 0)
                         pos = 0;
+                    
                     MessageQueue mq = tpInfo.getMessageQueueList().get(pos);
+                    
+                    // true : (System.currentTimeMillis() - startTimestamp) >= 0
                     if (latencyFaultTolerance.isAvailable(mq.getBrokerName())) {
+                    	// true : lastBrokerName = null | 两者字符串对象相同
                         if (null == lastBrokerName || mq.getBrokerName().equals(lastBrokerName))
                             return mq;
                     }
                 }
 
                 final String notBestBroker = latencyFaultTolerance.pickOneAtLeast();
+                // 获取BrokerName-topic下的写队列数目
                 int writeQueueNums = tpInfo.getQueueIdByBroker(notBestBroker);
                 if (writeQueueNums > 0) {
                     final MessageQueue mq = tpInfo.selectOneMessageQueue();
                     if (notBestBroker != null) {
                         mq.setBrokerName(notBestBroker);
+                        // 随机获取队列计数器(即发往那条队列上去)
                         mq.setQueueId(tpInfo.getSendWhichQueue().getAndIncrement() % writeQueueNums);
                     }
+                    
                     return mq;
                 } else {
                     latencyFaultTolerance.remove(notBestBroker);
@@ -86,6 +101,7 @@ public class MQFaultStrategy {
                 log.error("Error occurred when selecting message queue", e);
             }
 
+            // 随机获取MessageQueue对象
             return tpInfo.selectOneMessageQueue();
         }
 
@@ -100,7 +116,8 @@ public class MQFaultStrategy {
     }
 
     private long computeNotAvailableDuration(final long currentLatency) {
-        for (int i = latencyMax.length - 1; i >= 0; i--) {
+        // 遍历latencyMax数组对象
+    	for (int i = latencyMax.length - 1; i >= 0; i--) {
             if (currentLatency >= latencyMax[i])
                 return this.notAvailableDuration[i];
         }
