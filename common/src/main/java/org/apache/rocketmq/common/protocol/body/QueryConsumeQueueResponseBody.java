@@ -22,12 +22,23 @@ import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
 import java.util.List;
 
+
+// 查询指定group-topic下的SubscriptionData是否匹配在index处的count个消息数据
 public class QueryConsumeQueueResponseBody extends RemotingSerializable {
 
+	// group-topic下的订阅组对象
     private SubscriptionData subscriptionData;
+    
+    // 记录topic-group下的ConsumerFilterData字符串对象
     private String filterData;
+    
+    // ConsumerQueue中20字节存储单元相关状态信息以及MessageFilter匹配结果对象
     private List<ConsumeQueueData> queueData;
+    
+    // consumeQueue中最大偏移量(单位: 20字节)
     private long maxQueueIndex;
+    
+    // consumeQueue中最小偏移量(单位: 20字节)
     private long minQueueIndex;
 
     public SubscriptionData getSubscriptionData() {
