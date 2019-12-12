@@ -27,23 +27,33 @@ import org.apache.rocketmq.common.protocol.heartbeat.ConsumeType;
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
+// 它是用于记录客户端运行状态对象, 
 public class ConsumerRunningInfo extends RemotingSerializable {
-    public static final String PROP_NAMESERVER_ADDR = "PROP_NAMESERVER_ADDR";
-    public static final String PROP_THREADPOOL_CORE_SIZE = "PROP_THREADPOOL_CORE_SIZE";
-    public static final String PROP_CONSUME_ORDERLY = "PROP_CONSUMEORDERLY";
-    public static final String PROP_CONSUME_TYPE = "PROP_CONSUME_TYPE";
-    public static final String PROP_CLIENT_VERSION = "PROP_CLIENT_VERSION";
-    public static final String PROP_CONSUMER_START_TIMESTAMP = "PROP_CONSUMER_START_TIMESTAMP";
+	
+	// namesrv服务器Key值对象
+    public static final String PROP_NAMESERVER_ADDR = "PROP_NAMESERVER_ADDR"; // namesrv服务器Key对象
+    // 核心线程池数量Key对象
+    public static final String PROP_THREADPOOL_CORE_SIZE = "PROP_THREADPOOL_CORE_SIZE"; 
+    // 顺序消费Key对象
+    public static final String PROP_CONSUME_ORDERLY = "PROP_CONSUMEORDERLY";  
+    // 消费类型Key对象
+    public static final String PROP_CONSUME_TYPE = "PROP_CONSUME_TYPE"; 
+    // 客户端版本号Key对象
+    public static final String PROP_CLIENT_VERSION = "PROP_CLIENT_VERSION"; 
+    // 消费开始时间戳Key对象
+    public static final String PROP_CONSUMER_START_TIMESTAMP = "PROP_CONSUMER_START_TIMESTAMP"; 
 
     private Properties properties = new Properties();
 
+    // 消费对象下的topic下的所有订阅组信息
     private TreeSet<SubscriptionData> subscriptionSet = new TreeSet<SubscriptionData>();
 
+    // topic下的MessageQueue对象下的ProcessQueue对象状态信息 
     private TreeMap<MessageQueue, ProcessQueueInfo> mqTable = new TreeMap<MessageQueue, ProcessQueueInfo>();
 
     private TreeMap<String/* Topic */, ConsumeStatus> statusTable = new TreeMap<String, ConsumeStatus>();
 
-    private String jstack;
+    private String jstack; // 所有线程的堆栈状态信息
 
     public static boolean analyzeSubscription(final TreeMap<String/* clientId */, ConsumerRunningInfo> criTable) {
         ConsumerRunningInfo prev = criTable.firstEntry().getValue();
