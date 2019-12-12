@@ -15,13 +15,16 @@
  * limitations under the License.
  */
 
-package org.apache.rocketmq.common.protocol.header;
+package org.apache.rocketmq.common.protocol.body;
 
 import java.util.List;
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
+// 获取同一消费组group下所有的客户端Id对象
 public class GetConsumerListByGroupResponseBody extends RemotingSerializable {
-    private List<String> consumerIdList;
+    
+	// 结果封装对象
+	private List<String> consumerIdList;
 
     public List<String> getConsumerIdList() {
         return consumerIdList;
