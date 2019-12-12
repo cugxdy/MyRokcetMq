@@ -43,6 +43,7 @@ public class IndexService {
     // 最大重试创建次数(3)
     private static final int MAX_TRY_IDX_CREATE = 3;
     
+    // 消息配置类
     private final DefaultMessageStore defaultMessageStore;
     
     // 最大哈希槽数目
@@ -51,7 +52,7 @@ public class IndexService {
     // 最大索引数目
     private final int indexNum;
     
-    // 存储路径
+    // 存储路径(default = C:\Users\Administrator\store\index)
     private final String storePath;
     
     private final ArrayList<IndexFile> indexFileList = new ArrayList<IndexFile>();
@@ -74,7 +75,7 @@ public class IndexService {
 
     // 从配置路径中去加载文件
     public boolean load(final boolean lastExitOK) {
-    	// 目录文件
+    	// 目录文件(default = C:\Users\Administrator\store\index)
         File dir = new File(this.storePath); 
         
         // 获取目录下的所有文件
@@ -138,6 +139,7 @@ public class IndexService {
 
         if (files != null) {
             List<IndexFile> fileList = new ArrayList<IndexFile>();
+            
             for (int i = 0; i < (files.length - 1); i++) {
                 IndexFile f = (IndexFile) files[i];
                 // 当最大物理偏移量小于offset时,将其加入待删除list中
