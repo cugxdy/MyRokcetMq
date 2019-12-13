@@ -24,16 +24,26 @@ import org.apache.rocketmq.remoting.common.SemaphoreReleaseOnlyOnce;
 import org.apache.rocketmq.remoting.protocol.RemotingCommand;
 
 public class ResponseFuture {
+	
+	// 它记录请求标识号
     private final int opaque;
+    // 异步|同步请求超时报文时间
     private final long timeoutMillis;
+    // 异步调用回调对象
     private final InvokeCallback invokeCallback;
+    // 它记录着ResponseFuture对象创建时间戳
     private final long beginTimestamp = System.currentTimeMillis();
     private final CountDownLatch countDownLatch = new CountDownLatch(1);
 
+    // 它是用于控制netty程序中发送RemotingCommand对象令牌数
     private final SemaphoreReleaseOnlyOnce once;
-
+    // 它记录着是否已被唤醒过, countDown()方法
     private final AtomicBoolean executeCallbackOnlyOnce = new AtomicBoolean(false);
+    
+    // 响应RemotingCommand对象
     private volatile RemotingCommand responseCommand;
+    
+    // 判断数据是否发送成功
     private volatile boolean sendRequestOK = true;
     private volatile Throwable cause;
 
@@ -45,6 +55,7 @@ public class ResponseFuture {
         this.once = once;
     }
 
+    // 异步发送报文时触发回调方法
     public void executeInvokeCallback() {
         if (invokeCallback != null) {
             if (this.executeCallbackOnlyOnce.compareAndSet(false, true)) {
@@ -64,11 +75,13 @@ public class ResponseFuture {
         return diff > this.timeoutMillis;
     }
 
+    // 同步发送请求,阻塞指定时间调用线程(同步调用)
     public RemotingCommand waitResponse(final long timeoutMillis) throws InterruptedException {
         this.countDownLatch.await(timeoutMillis, TimeUnit.MILLISECONDS);
         return this.responseCommand;
     }
 
+    // 请求收到响应报文,在同步报文中调用,触发
     public void putResponse(final RemotingCommand responseCommand) {
         this.responseCommand = responseCommand;
         this.countDownLatch.countDown();
