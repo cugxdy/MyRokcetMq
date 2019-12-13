@@ -22,11 +22,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+// 它是MQ中以字节形式去编解码RemotingCommand对象
 public class RocketMQSerializable {
     private static final Charset CHARSET_UTF8 = Charset.forName("UTF-8");
 
     public static byte[] rocketMQProtocolEncode(RemotingCommand cmd) {
         // String remark
+    	// 对RemotingCommand对象中extFields属性值进行编码
         byte[] remarkBytes = null;
         int remarkLen = 0;
         if (cmd.getRemark() != null && cmd.getRemark().length() > 0) {
@@ -35,6 +37,7 @@ public class RocketMQSerializable {
         }
 
         // HashMap<String, String> extFields
+        // 对RemotingCommand对象中extFields属性值进行编码
         byte[] extFieldsBytes = null;
         int extLen = 0;
         if (cmd.getExtFields() != null && !cmd.getExtFields().isEmpty()) {
@@ -42,26 +45,29 @@ public class RocketMQSerializable {
             extLen = extFieldsBytes.length;
         }
 
+        // 计算该RemotingCommand对象所占用字节数
         int totalLen = calTotalLen(remarkLen, extLen);
 
         ByteBuffer headerBuffer = ByteBuffer.allocate(totalLen);
-        // int code(~32767)
+        // int code(~32767)  code : 请求代码
         headerBuffer.putShort((short) cmd.getCode());
-        // LanguageCode language
+        // LanguageCode language 使用语言: java, php, c++
         headerBuffer.put(cmd.getLanguage().getCode());
-        // int version(~32767)
+        // int version(~32767) RemotingCommand版本号
         headerBuffer.putShort((short) cmd.getVersion());
-        // int opaque
+        // int opaque 请求标识号 : 请求标识号
         headerBuffer.putInt(cmd.getOpaque());
-        // int flag
+        // int flag flag标识号
         headerBuffer.putInt(cmd.getFlag());
-        // String remark
+        // String remark remark字符串对象
         if (remarkBytes != null) {
             headerBuffer.putInt(remarkBytes.length);
             headerBuffer.put(remarkBytes);
         } else {
             headerBuffer.putInt(0);
         }
+        
+        // 写入extFields编码的字符串对象
         // HashMap<String, String> extFields;
         if (extFieldsBytes != null) {
             headerBuffer.putInt(extFieldsBytes.length);
@@ -70,9 +76,11 @@ public class RocketMQSerializable {
             headerBuffer.putInt(0);
         }
 
+        // byte[]字节数组对象
         return headerBuffer.array();
     }
 
+    // 将map中字符串对象编码成keySize+key+valSize+val字节流形式
     public static byte[] mapSerialize(HashMap<String, String> map) {
         // keySize+key+valSize+val
         if (null == map || map.isEmpty())
@@ -89,11 +97,13 @@ public class RocketMQSerializable {
                     2 + entry.getKey().getBytes(CHARSET_UTF8).length
                         // valSize + val
                         + 4 + entry.getValue().getBytes(CHARSET_UTF8).length;
+                // 计算该map所占用字节数
                 totalLength += kvLength;
             }
         }
 
         ByteBuffer content = ByteBuffer.allocate(totalLength);
+        // 记录key|value字节数组对象
         byte[] key;
         byte[] val;
         it = map.entrySet().iterator();
@@ -103,10 +113,14 @@ public class RocketMQSerializable {
                 key = entry.getKey().getBytes(CHARSET_UTF8);
                 val = entry.getValue().getBytes(CHARSET_UTF8);
 
+                // keySize
                 content.putShort((short) key.length);
+                // key对象
                 content.put(key);
 
+                // valueSize
                 content.putInt(val.length);
+                // val对象
                 content.put(val);
             }
         }
@@ -133,27 +147,29 @@ public class RocketMQSerializable {
         return length;
     }
 
+    // 将byte[]字节数组对象编码成RemotingCommand对象
     public static RemotingCommand rocketMQProtocolDecode(final byte[] headerArray) {
         RemotingCommand cmd = new RemotingCommand();
         ByteBuffer headerBuffer = ByteBuffer.wrap(headerArray);
         // int code(~32767)
-        cmd.setCode(headerBuffer.getShort());
+        cmd.setCode(headerBuffer.getShort()); // 请求代码
         // LanguageCode language
-        cmd.setLanguage(LanguageCode.valueOf(headerBuffer.get()));
+        cmd.setLanguage(LanguageCode.valueOf(headerBuffer.get())); // 客户端使用计算机语言
         // int version(~32767)
-        cmd.setVersion(headerBuffer.getShort());
+        cmd.setVersion(headerBuffer.getShort()); // 客户端版本号
         // int opaque
-        cmd.setOpaque(headerBuffer.getInt());
+        cmd.setOpaque(headerBuffer.getInt()); // 请求标识号
         // int flag
-        cmd.setFlag(headerBuffer.getInt());
+        cmd.setFlag(headerBuffer.getInt()); // 请求flag标签
         // String remark
-        int remarkLength = headerBuffer.getInt();
+        int remarkLength = headerBuffer.getInt(); // 请求中自定义文本信息
         if (remarkLength > 0) {
             byte[] remarkContent = new byte[remarkLength];
             headerBuffer.get(remarkContent);
             cmd.setRemark(new String(remarkContent, CHARSET_UTF8));
         }
 
+        // 将字节数组编码成Map<String, String>对象
         // HashMap<String, String> extFields
         int extFieldsLength = headerBuffer.getInt();
         if (extFieldsLength > 0) {
@@ -176,6 +192,7 @@ public class RocketMQSerializable {
         int valSize;
         byte[] valContent;
         while (byteBuffer.hasRemaining()) {
+        	// keySize
             keySize = byteBuffer.getShort();
             keyContent = new byte[keySize];
             byteBuffer.get(keyContent);
@@ -184,11 +201,13 @@ public class RocketMQSerializable {
             valContent = new byte[valSize];
             byteBuffer.get(valContent);
 
+            // 从字节数组编码成map对象
             map.put(new String(keyContent, CHARSET_UTF8), new String(valContent, CHARSET_UTF8));
         }
         return map;
     }
 
+    // 它是用于判断字符串是否为空
     public static boolean isBlank(String str) {
         int strLen;
         if (str == null || (strLen = str.length()) == 0) {
