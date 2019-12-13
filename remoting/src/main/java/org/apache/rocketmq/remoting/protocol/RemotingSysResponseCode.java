@@ -17,7 +17,7 @@
 
 package org.apache.rocketmq.remoting.protocol;
 
-// 响应码
+// 它记录了netty中对网络对端的响应码
 public class RemotingSysResponseCode {
 
 	// 成功
