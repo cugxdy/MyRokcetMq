@@ -20,10 +20,18 @@ package org.apache.rocketmq.remoting.netty;
 import io.netty.channel.Channel;
 import org.apache.rocketmq.remoting.protocol.RemotingCommand;
 
+// 它是用于去处理Tcp请求报文对象, 封装成调度任务, 并submit至线程池中
 public class RequestTask implements Runnable {
+	
+	// 它记录着运行调度任务
     private final Runnable runnable;
+    // 记录着该对象创建时间戳
     private final long createTimestamp = System.currentTimeMillis();
+    
+    // 记录着客户端Channel对象
     private final Channel channel;
+    
+    // 请求RemotingCommand对象
     private final RemotingCommand request;
     private boolean stopRun = false;
 
@@ -80,6 +88,7 @@ public class RequestTask implements Runnable {
             this.runnable.run();
     }
 
+    // 向客户端写入消息
     public void returnResponse(int code, String remark) {
         final RemotingCommand response = RemotingCommand.createResponseCommand(code, remark);
         response.setOpaque(request.getOpaque());
