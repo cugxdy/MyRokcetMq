@@ -26,10 +26,11 @@ import org.apache.rocketmq.remoting.protocol.RemotingCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// 它是netty服务中的解码器, 服务在此拆分数据包, 解码成RemotingCommand对象
 public class NettyDecoder extends LengthFieldBasedFrameDecoder {
     private static final Logger log = LoggerFactory.getLogger(RemotingHelper.ROCKETMQ_REMOTING);
 
-    // RocketMq最大消息长度
+    // RocketMq最大消息长度, 16777216 = ChunkSize
     private static final int FRAME_MAX_LENGTH =
         Integer.parseInt(System.getProperty("com.rocketmq.remoting.frameMaxLength", "16777216"));
 
