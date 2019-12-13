@@ -23,8 +23,8 @@ public class RemotingSysResponseCode {
 	// 成功
     public static final int SUCCESS = 0;
     
-    // 错误
-    public static final int SYSTEM_ERROR = 1;
+    // 系统错误
+    public static final int SYSTEM_ERROR = 1; 
 
     // 系统繁忙
     public static final int SYSTEM_BUSY = 2;
