@@ -31,7 +31,9 @@ import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// 它是记录MQ中在网络端对端之间发送字节数组的对象
 public class RemotingCommand {
+	
     public static final String SERIALIZE_TYPE_PROPERTY = "rocketmq.serialize.type";
     public static final String SERIALIZE_TYPE_ENV = "ROCKETMQ_SERIALIZE_TYPE";
     public static final String REMOTING_VERSION_KEY = "rocketmq.remoting.version";
@@ -62,6 +64,7 @@ public class RemotingCommand {
     private static final String BOOLEAN_CANONICAL_NAME_1 = Boolean.class.getCanonicalName();
     private static final String BOOLEAN_CANONICAL_NAME_2 = boolean.class.getCanonicalName();
     private static volatile int configVersion = -1;
+    
     // 请求ID
     private static AtomicInteger requestId = new AtomicInteger(0);
 
@@ -91,6 +94,8 @@ public class RemotingCommand {
     // 请求方程序的版本
     // 应答方程序的版本
     private int version = 0;
+    
+    // 请求标识号
     private int opaque = requestId.getAndIncrement();
     
     // 区分是普通RPC还是onewayRPC得标志
@@ -101,6 +106,8 @@ public class RemotingCommand {
     
     // 请求自定义扩展信息
     private HashMap<String, String> extFields;
+    
+    // 最终customHeader中属性值会被设置至extFields<String,String> 对象中
     private transient CommandCustomHeader customHeader; // 包头数据，注意transient标记，不会被序列化
 
     // 默认为JSON序列化方法
@@ -114,7 +121,7 @@ public class RemotingCommand {
     // 创建RemotingCommand对象
     public static RemotingCommand createRequestCommand(int code, CommandCustomHeader customHeader) {
         RemotingCommand cmd = new RemotingCommand();
-        cmd.setCode(code);
+        cmd.setCode(code); // cmd请求类型
         cmd.customHeader = customHeader;
         setCmdVersion(cmd);
         return cmd;
@@ -135,10 +142,12 @@ public class RemotingCommand {
         }
     }
 
+    // 构建错误响应报文数据
     public static RemotingCommand createResponseCommand(Class<? extends CommandCustomHeader> classHeader) {
         return createResponseCommand(RemotingSysResponseCode.SYSTEM_ERROR, "not set any response code", classHeader);
     }
 
+    // 创建对请求的响应的响应报文数据
     public static RemotingCommand createResponseCommand(int code, String remark,
         Class<? extends CommandCustomHeader> classHeader) {
         RemotingCommand cmd = new RemotingCommand();
@@ -258,8 +267,12 @@ public class RemotingCommand {
         byte[] result = new byte[4];
 
         result[0] = type.getCode();
+        
+        // 高3字节
         result[1] = (byte) ((source >> 16) & 0xFF);
+        // 高2字节
         result[2] = (byte) ((source >> 8) & 0xFF);
+        // 高1字节
         result[3] = (byte) (source & 0xFF);
         return result;
     }
@@ -281,7 +294,8 @@ public class RemotingCommand {
     // 由RemotingCommand对象解码生成CommandCustomHeader对象
     public CommandCustomHeader decodeCommandCustomHeader(
         Class<? extends CommandCustomHeader> classHeader) throws RemotingCommandException {
-        CommandCustomHeader objectHeader;
+        
+    	CommandCustomHeader objectHeader;
         try {
             objectHeader = classHeader.newInstance();
         } catch (InstantiationException e) {
@@ -467,6 +481,7 @@ public class RemotingCommand {
         return encodeHeader(this.body != null ? this.body.length : 0);
     }
 
+    // 将该RemotingCommand编码成ByteBuffer对象
     public ByteBuffer encodeHeader(final int bodyLength) {
         // 1> header length size
         int length = 4; // 头部字节的长度
@@ -497,6 +512,7 @@ public class RemotingCommand {
         return result;
     }
 
+    // 标识为RPC_ONEWAY,只管发(不管成功还是失败)
     public void markOnewayRPC() {
         int bits = 1 << RPC_ONEWAY;
         this.flag |= bits;
