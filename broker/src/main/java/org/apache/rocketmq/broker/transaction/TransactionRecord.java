@@ -17,15 +17,20 @@
 
 package org.apache.rocketmq.broker.transaction;
 
+// 事务记录对象, 相当于数据库每行所对应Bean数据对象
 public class TransactionRecord {
+	
     // Commit Log Offset
-    private long offset;
+    private long offset; // commitLog offset 偏移量
+    
+    // 生产者名称
     private String producerGroup;
 
     public long getOffset() {
         return offset;
     }
 
+    // 设置commitLog索引号
     public void setOffset(long offset) {
         this.offset = offset;
     }
@@ -34,6 +39,7 @@ public class TransactionRecord {
         return producerGroup;
     }
 
+    // 设置生成者名称
     public void setProducerGroup(String producerGroup) {
         this.producerGroup = producerGroup;
     }
