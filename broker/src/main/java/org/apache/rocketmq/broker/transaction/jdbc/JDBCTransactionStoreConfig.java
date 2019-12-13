@@ -17,10 +17,15 @@
 
 package org.apache.rocketmq.broker.transaction.jdbc;
 
+// 它记录了Mysql数据连接的相关配置选项, 例如用户名称、密码
 public class JDBCTransactionStoreConfig {
+	// MySql驱动类名称
     private String jdbcDriverClass = "com.mysql.jdbc.Driver";
+    // MySqlurl
     private String jdbcURL = "jdbc:mysql://xxx.xxx.xxx.xxx:1000/xxx?useUnicode=true&characterEncoding=UTF-8";
+    // MySql数据库用户名称
     private String jdbcUser = "xxx";
+    // MySql数据库用户密码
     private String jdbcPassword = "xxx";
 
     public String getJdbcDriverClass() {
