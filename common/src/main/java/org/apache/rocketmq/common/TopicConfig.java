@@ -18,9 +18,11 @@ package org.apache.rocketmq.common;
 
 import org.apache.rocketmq.common.constant.PermName;
 
+// 它记录了Topic相关message
 public class TopicConfig {
 	// 分隔符
     private static final String SEPARATOR = " ";
+    
     // 默认读队列数目
     public static int defaultReadQueueNums = 16;
     // 默认写队列数目
@@ -36,10 +38,13 @@ public class TopicConfig {
     // 默认可读写
     private int perm = PermName.PERM_READ | PermName.PERM_WRITE;
     
+    // SINGLE_TAG | MULTI_TAG
     private TopicFilterType topicFilterType = TopicFilterType.SINGLE_TAG;
     
+    // 0 | 0000 0001(unit = true : !RETRY) | 0000 0010 (unit = true : RETRY)
     private int topicSysFlag = 0;
     
+    // 
     private boolean order = false;
 
     public TopicConfig() {
