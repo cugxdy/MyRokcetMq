@@ -17,6 +17,7 @@
 
 package org.apache.rocketmq.remoting.netty;
 
+// netty中soocket基本配置, Pool|Unpool; sendBuf|receivedBuf
 public class NettySystemConfig {
     public static final String COM_ROCKETMQ_REMOTING_NETTY_POOLED_BYTE_BUF_ALLOCATOR_ENABLE =
         "com.rocketmq.remoting.nettyPooledByteBufAllocatorEnable";
@@ -35,8 +36,10 @@ public class NettySystemConfig {
         Integer.parseInt(System.getProperty(COM_ROCKETMQ_REMOTING_CLIENT_ASYNC_SEMAPHORE_VALUE, "65535"));
     public static final int CLIENT_ONEWAY_SEMAPHORE_VALUE =
         Integer.parseInt(System.getProperty(COM_ROCKETMQ_REMOTING_CLIENT_ONEWAY_SEMAPHORE_VALUE, "65535"));
+    // sokcet发送缓存区
     public static int socketSndbufSize =
         Integer.parseInt(System.getProperty(COM_ROCKETMQ_REMOTING_SOCKET_SNDBUF_SIZE, "65535"));
+    // socket接收缓存区
     public static int socketRcvbufSize =
         Integer.parseInt(System.getProperty(COM_ROCKETMQ_REMOTING_SOCKET_RCVBUF_SIZE, "65535"));
 }
