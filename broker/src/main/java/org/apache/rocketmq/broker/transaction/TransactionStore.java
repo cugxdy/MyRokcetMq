@@ -19,6 +19,7 @@ package org.apache.rocketmq.broker.transaction;
 
 import java.util.List;
 
+// 事务存储接口对象, 向Mysql数据库中去存储数据
 public interface TransactionStore {
     boolean open();
 
